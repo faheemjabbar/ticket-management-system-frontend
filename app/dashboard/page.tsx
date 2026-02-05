@@ -87,14 +87,14 @@ function SortableTicketCard({ ticket, onClick, onSelfAssign, isDeveloper, isPend
     >
       {/* Ticket Title */}
       <div className="flex items-start justify-between mb-1.5">
-        <h4 className="text-xs font-medium text-gray-900 line-clamp-2 flex-1 leading-tight">
+        <h4 className="text-[10px] font-medium text-gray-900 line-clamp-2 flex-1 leading-tight">
           {ticket.title}
         </h4>
-        <span className="text-[10px] text-gray-500 ml-1.5">#{ticket.id}</span>
+        <span className="text-[9px] text-gray-500 ml-1.5">#{ticket.id}</span>
       </div>
 
       {/* Ticket Meta */}
-      <div className="text-[10px] text-gray-500 mb-2">
+      <div className="text-[9px] text-gray-500 mb-2">
         <span className="font-medium">{ticket.author}</span>
         <span className="mx-1">•</span>
         <span>{ticket.time}</span>
@@ -105,7 +105,7 @@ function SortableTicketCard({ ticket, onClick, onSelfAssign, isDeveloper, isPend
         {ticket.labels.map((label: string, idx: number) => (
           <span
             key={idx}
-            className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700"
+            className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-100 text-blue-700"
           >
             {label}
           </span>
@@ -120,7 +120,7 @@ function SortableTicketCard({ ticket, onClick, onSelfAssign, isDeveloper, isPend
               e.stopPropagation();
               onSelfAssign(ticket.id);
             }}
-            className="text-xs text-orange-600 hover:text-orange-700 font-medium"
+            className="text-[10px] text-orange-600 hover:text-orange-700 font-medium"
           >
             Assign yourself
           </button>
@@ -129,7 +129,7 @@ function SortableTicketCard({ ticket, onClick, onSelfAssign, isDeveloper, isPend
             onClick={(e) => e.stopPropagation()}
             className="text-gray-400 hover:text-gray-600"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
             </svg>
           </button>
@@ -214,8 +214,8 @@ export default function DashboardPage() {
         const dashboardTickets = ticketsResponse.tickets.map(convertToDashboardTicket);
         setTickets(dashboardTickets);
 
-        // Load projects only for QA and Admin
-        if (user && (user.role === 'qa' || user.role === 'admin')) {
+        // Load projects only for QA, Admin, and SuperAdmin
+        if (user && (user.role === 'qa' || user.role === 'admin' || user.role === 'superadmin')) {
           const projectsResponse = await projectAPI.getAll({ limit: 100 });
           const projectsWithAll = [
             { id: 'all', name: 'All Projects', description: '', status: 'active' as const, createdBy: '', teamMembers: [], startDate: '', createdAt: '', updatedAt: '' },
@@ -484,8 +484,8 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex flex-col items-end gap-3">
-              {/* Project Filter Dropdown - Only for QA and Admin */}
-              {user && (user.role === 'qa' || user.role === 'admin') && (
+              {/* Project Filter Dropdown - Only for QA, Admin, and SuperAdmin */}
+              {user && (user.role === 'qa' || user.role === 'admin' || user.role === 'superadmin') && (
                 <div className="relative">
                   <button 
                     onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
@@ -494,7 +494,7 @@ export default function DashboardPage() {
                     <span className="text-xs font-medium text-black">
                       {projects.find(p => p.id === selectedProject)?.name || 'All Projects'}
                     </span>
-                    <ChevronDown className="w-3.5 h-3.5 text-black" />
+                    <ChevronDown className="w-3 h-3 text-black" />
                   </button>
                   
                   {isProjectDropdownOpen && (
@@ -548,10 +548,10 @@ export default function DashboardPage() {
                   <div key={column.id} className="bg-gray-50 rounded-lg p-2.5">
                     {/* Column Header */}
                     <div className="flex items-center justify-between mb-2.5">
-                      <h3 className="text-sm font-semibold text-gray-900">
+                      <h3 className="text-xs font-semibold text-gray-900">
                         {column.id === 'pending' && user?.role === 'developer' 
                           ? 'Available Tickets' 
-                          : column.title} <span className="text-gray-500 text-xs">({columnTickets.length})</span>
+                          : column.title} <span className="text-gray-500 text-[10px]">({columnTickets.length})</span>
                       </h3>
                     </div>
 

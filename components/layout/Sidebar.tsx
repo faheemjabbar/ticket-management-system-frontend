@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import CreateTicketModal from '@/components/tickets/CreateTicketModal';
+import { NotificationPanel } from './NotificationPanel';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -32,7 +33,7 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
       name: 'Overview',
       href: '/dashboard',
       icon: LayoutDashboard,
-      roles: ['admin', 'developer', 'qa'],
+      roles: ['admin', 'developer', 'qa', 'superadmin'],
     },
   ];
 
@@ -41,19 +42,19 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
       name: 'Projects',
       href: '/projects',
       icon: Folder,
-      roles: ['admin', 'qa'],
+      roles: ['admin', 'qa', 'superadmin'],
     },
     {
       name: 'Users',
       href: '/users',
       icon: Users,
-      roles: ['admin'],
+      roles: ['admin', 'superadmin'],
     },
     {
       name: 'Settings',
       href: '/settings',
       icon: Settings,
-      roles: ['admin'],
+      roles: ['admin', 'superadmin'],
     },
   ];
 
@@ -95,14 +96,19 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
             </span>
           </div>
           
-          {/* Close button for mobile */}
-          <button
-            onClick={onClose}
-            className="lg:hidden p-2 hover:bg-gray-700 rounded-lg transition-colors"
-            aria-label="Close menu"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Notification Panel */}
+            <NotificationPanel />
+            
+            {/* Close button for mobile */}
+            <button
+              onClick={onClose}
+              className="lg:hidden p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* User Info & Actions */}
@@ -111,13 +117,13 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
             <div className="text-sm font-medium text-white">
               {user?.name || 'Guest User'}
             </div>
-            <div className="text-xs text-gray-500 capitalize">
+            <div className="text-sm text-gray-500 capitalize">
               {user?.role || 'No role'}
             </div>
           </div>
           
-          {/* Only show New Ticket button for QA and Admin */}
-          {user && (user.role === 'qa' || user.role === 'admin') && (
+          {/* Only show New Ticket button for QA, Admin, and SuperAdmin */}
+          {user && (user.role === 'qa' || user.role === 'admin' || user.role === 'superadmin') && (
             <button
               onClick={() => setIsCreateModalOpen(true)}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
@@ -156,7 +162,7 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
           {filteredStaffNav.length > 0 && (
             <>
               <div className="pt-4 pb-2">
-                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3">
+                <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider px-3">
                   Staff Only
                 </div>
               </div>

@@ -217,16 +217,16 @@ export default function ProjectsPage() {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-xl font-semibold text-gray-900 tracking-tight">Projects</h1>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-500 mt-0.5">
                   Manage and organize your projects
                 </p>
               </div>
 
               <button
                 onClick={handleCreateProject}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-sm font-medium hover:bg-orange-700 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-xs font-medium hover:bg-orange-700 transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
                 New Project
               </button>
             </div>
@@ -237,7 +237,7 @@ export default function ProjectsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Total</div>
-                    <div className="text-2xl font-semibold text-gray-900 tabular-nums">{stats.total}</div>
+                    <div className="text-xl font-semibold text-gray-900 tabular-nums">{stats.total}</div>
                   </div>
                   <div className="w-9 h-9 bg-blue-50 rounded flex items-center justify-center">
                     <Folder className="w-4 h-4 text-blue-600" />
@@ -249,7 +249,7 @@ export default function ProjectsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Active</div>
-                    <div className="text-2xl font-semibold text-green-600 tabular-nums">{stats.active}</div>
+                    <div className="text-xl font-semibold text-green-600 tabular-nums">{stats.active}</div>
                   </div>
                   <div className="w-9 h-9 bg-green-50 rounded flex items-center justify-center">
                     <Clock className="w-4 h-4 text-green-600" />
@@ -261,7 +261,7 @@ export default function ProjectsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Completed</div>
-                    <div className="text-2xl font-semibold text-blue-600 tabular-nums">{stats.completed}</div>
+                    <div className="text-xl font-semibold text-blue-600 tabular-nums">{stats.completed}</div>
                   </div>
                   <div className="w-9 h-9 bg-blue-50 rounded flex items-center justify-center">
                     <CheckCircle2 className="w-4 h-4 text-blue-600" />
@@ -273,7 +273,7 @@ export default function ProjectsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Archived</div>
-                    <div className="text-2xl font-semibold text-gray-600 tabular-nums">{stats.archived}</div>
+                    <div className="text-xl font-semibold text-gray-600 tabular-nums">{stats.archived}</div>
                   </div>
                   <div className="w-9 h-9 bg-gray-50 rounded flex items-center justify-center">
                     <Archive className="w-4 h-4 text-gray-600" />
@@ -287,13 +287,13 @@ export default function ProjectsPage() {
               <div className="flex gap-2">
                 <div className="flex-1">
                   <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
                     <input
                       type="text"
                       placeholder="Search projects..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded text-sm text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                      className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded text-xs text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
                     />
                   </div>
                 </div>
@@ -302,7 +302,7 @@ export default function ProjectsPage() {
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-sm text-gray-900 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                    className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs text-gray-900 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
                   >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
@@ -328,26 +328,26 @@ export default function ProjectsPage() {
                         <div className="w-8 h-8 bg-orange-50 rounded flex items-center justify-center flex-shrink-0">
                           <Folder className="w-4 h-4 text-orange-600" />
                         </div>
-                        <h3 className="text-sm font-semibold text-gray-900 group-hover:text-orange-600 transition-colors truncate">
+                        <h3 className="text-xs font-semibold text-gray-900 group-hover:text-orange-600 transition-colors truncate">
                           {project.name}
                         </h3>
                       </div>
                       {getStatusBadge(project.status)}
                     </div>
-                    <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+                    <p className="text-[10px] text-gray-600 line-clamp-2 leading-relaxed">
                       {project.description}
                     </p>
                   </div>
 
                   {/* Card Body */}
                   <div className="p-3 space-y-2">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                      <Users className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
+                      <Users className="w-3 h-3 text-gray-400 flex-shrink-0" />
                       <span>{project.teamMembers.length} member{project.teamMembers.length !== 1 ? 's' : ''}</span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                      <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
+                      <Calendar className="w-3 h-3 text-gray-400 flex-shrink-0" />
                       <span className="truncate">
                         {formatDate(project.startDate)} {project.endDate && `— ${formatDate(project.endDate)}`}
                       </span>
@@ -356,19 +356,19 @@ export default function ProjectsPage() {
                     {/* Ticket Stats */}
                     <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-gray-100">
                       <div className="text-center">
-                        <div className="text-base font-semibold text-gray-900 tabular-nums">{project.ticketCount.total}</div>
+                        <div className="text-sm font-semibold text-gray-900 tabular-nums">{project.ticketCount.total}</div>
                         <div className="text-[9px] text-gray-500 uppercase tracking-wide font-medium">Total</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-base font-semibold text-orange-600 tabular-nums">{project.ticketCount.pending}</div>
+                        <div className="text-sm font-semibold text-orange-600 tabular-nums">{project.ticketCount.pending}</div>
                         <div className="text-[9px] text-gray-500 uppercase tracking-wide font-medium">Pending</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-base font-semibold text-blue-600 tabular-nums">{project.ticketCount.assigned}</div>
+                        <div className="text-sm font-semibold text-blue-600 tabular-nums">{project.ticketCount.assigned}</div>
                         <div className="text-[9px] text-gray-500 uppercase tracking-wide font-medium">Assigned</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-base font-semibold text-green-600 tabular-nums">{project.ticketCount.closed}</div>
+                        <div className="text-sm font-semibold text-green-600 tabular-nums">{project.ticketCount.closed}</div>
                         <div className="text-[9px] text-gray-500 uppercase tracking-wide font-medium">Closed</div>
                       </div>
                     </div>
@@ -381,7 +381,7 @@ export default function ProjectsPage() {
                         e.stopPropagation();
                         handleViewProject(project.id);
                       }}
-                      className="text-xs font-medium text-orange-600 hover:text-orange-700 flex items-center gap-1"
+                      className="text-[10px] font-medium text-orange-600 hover:text-orange-700 flex items-center gap-1"
                     >
                       <Eye className="w-3 h-3" />
                       View Details
@@ -395,7 +395,7 @@ export default function ProjectsPage() {
                         className="p-1 hover:bg-gray-200 rounded transition-colors"
                         title="Edit project"
                       >
-                        <Edit className="w-3.5 h-3.5 text-gray-600" />
+                        <Edit className="w-3 h-3 text-gray-600" />
                       </button>
                       <button
                         onClick={(e) => {
@@ -405,7 +405,7 @@ export default function ProjectsPage() {
                         className="p-1 hover:bg-red-50 rounded transition-colors"
                         title="Delete project"
                       >
-                        <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                        <Trash2 className="w-3 h-3 text-red-600" />
                       </button>
                     </div>
                   </div>

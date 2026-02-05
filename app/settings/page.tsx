@@ -43,8 +43,26 @@ export default function SettingsPage() {
         timezone: user.timezone || 'UTC',
         language: user.language || 'en',
       });
+      
+      // Load notification preferences from backend
+      loadNotificationPreferences();
     }
   }, [user]);
+
+  const loadNotificationPreferences = async () => {
+    if (!user) return;
+    
+    try {
+      const preferences = await userAPI.getNotificationPreferences(user.id);
+      setNotificationSettings(preferences);
+    } catch (error) {
+      // If API fails, try loading from localStorage as fallback
+      const saved = localStorage.getItem('notificationSettings');
+      if (saved) {
+        setNotificationSettings(JSON.parse(saved));
+      }
+    }
+  };
 
   // Notification settings
   const [notificationSettings, setNotificationSettings] = useState({
@@ -102,14 +120,20 @@ export default function SettingsPage() {
   };
 
   const handleSaveNotifications = async () => {
+    if (!user) return;
+    
     try {
       setLoading(true);
-      // Note: Notification preferences would need a separate API endpoint
-      // For now, we'll just save to localStorage
+      // Save to backend API
+      await userAPI.updateNotificationPreferences(user.id, notificationSettings);
+      
+      // Also save to localStorage as backup
       localStorage.setItem('notificationSettings', JSON.stringify(notificationSettings));
+      
       toast.success('Notification preferences saved!');
-    } catch {
+    } catch (error) {
       toast.error('Failed to save preferences');
+      console.error('Error saving notification preferences:', error);
     } finally {
       setLoading(false);
     }
@@ -239,7 +263,7 @@ export default function SettingsPage() {
                             type="text"
                             value={profileData.name}
                             onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                            className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                           />
                         </div>
 
@@ -251,7 +275,7 @@ export default function SettingsPage() {
                             type="email"
                             value={profileData.email}
                             onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                            className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                           />
                         </div>
 
@@ -265,7 +289,7 @@ export default function SettingsPage() {
                             disabled
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-600 capitalize"
                           />
-                          <p className="text-xs text-gray-500 mt-1">Contact admin to change your role</p>
+                          <p className="text-sm text-gray-500 mt-1">Contact admin to change your role</p>
                         </div>
 
                         <div>
@@ -277,7 +301,7 @@ export default function SettingsPage() {
                             onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
                             rows={3}
                             placeholder="Tell us about yourself..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none"
+                            className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none"
                           />
                         </div>
 
@@ -289,7 +313,7 @@ export default function SettingsPage() {
                             <select
                               value={profileData.timezone}
                               onChange={(e) => setProfileData(prev => ({ ...prev, timezone: e.target.value }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                              className="w-full px-3 text-black py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                             >
                               <option value="UTC">UTC</option>
                               <option value="EST">EST</option>
@@ -305,7 +329,7 @@ export default function SettingsPage() {
                             <select
                               value={profileData.language}
                               onChange={(e) => setProfileData(prev => ({ ...prev, language: e.target.value }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                              className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                             >
                               <option value="en">English</option>
                               <option value="es">Spanish</option>
@@ -338,7 +362,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between py-3 border-b border-gray-200">
                           <div>
                             <p className="text-sm font-semibold text-gray-900">Email Notifications</p>
-                            <p className="text-xs text-gray-600">Receive notifications via email</p>
+                            <p className="text-sm text-gray-600">Receive notifications via email</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input
@@ -354,7 +378,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between py-3 border-b border-gray-200">
                           <div>
                             <p className="text-sm font-semibold text-gray-900">Ticket Assigned</p>
-                            <p className="text-xs text-gray-600">When a ticket is assigned to you</p>
+                            <p className="text-sm text-gray-600">When a ticket is assigned to you</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input
@@ -370,7 +394,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between py-3 border-b border-gray-200">
                           <div>
                             <p className="text-sm font-semibold text-gray-900">Ticket Updated</p>
-                            <p className="text-xs text-gray-600">When a ticket you're watching is updated</p>
+                            <p className="text-sm text-gray-600">When a ticket you're watching is updated</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input
@@ -386,7 +410,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between py-3 border-b border-gray-200">
                           <div>
                             <p className="text-sm font-semibold text-gray-900">Ticket Closed</p>
-                            <p className="text-xs text-gray-600">When a ticket is closed</p>
+                            <p className="text-sm text-gray-600">When a ticket is closed</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input
@@ -402,7 +426,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between py-3 border-b border-gray-200">
                           <div>
                             <p className="text-sm font-semibold text-gray-900">Weekly Digest</p>
-                            <p className="text-xs text-gray-600">Receive a weekly summary of activity</p>
+                            <p className="text-sm text-gray-600">Receive a weekly summary of activity</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input
@@ -418,7 +442,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between py-3">
                           <div>
                             <p className="text-sm font-semibold text-gray-900">Mention Notifications</p>
-                            <p className="text-xs text-gray-600">When someone mentions you in a comment</p>
+                            <p className="text-sm text-gray-600">When someone mentions you in a comment</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input
@@ -460,7 +484,7 @@ export default function SettingsPage() {
                               type={showPasswords.current ? 'text' : 'password'}
                               value={securityData.currentPassword}
                               onChange={(e) => setSecurityData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                              className="w-full  text-black px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                             />
                             <button
                               type="button"
@@ -481,7 +505,7 @@ export default function SettingsPage() {
                               type={showPasswords.new ? 'text' : 'password'}
                               value={securityData.newPassword}
                               onChange={(e) => setSecurityData(prev => ({ ...prev, newPassword: e.target.value }))}
-                              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                              className="w-full text-black px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                             />
                             <button
                               type="button"
@@ -491,7 +515,7 @@ export default function SettingsPage() {
                               {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
+                          <p className="text-sm text-gray-500 mt-1">Must be at least 8 characters</p>
                         </div>
 
                         <div>
@@ -503,7 +527,7 @@ export default function SettingsPage() {
                               type={showPasswords.confirm ? 'text' : 'password'}
                               value={securityData.confirmPassword}
                               onChange={(e) => setSecurityData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                              className="w-full px-3 text-black py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                             />
                             <button
                               type="button"
@@ -570,7 +594,7 @@ export default function SettingsPage() {
                           <select
                             value={appearanceSettings.fontSize}
                             onChange={(e) => setAppearanceSettings(prev => ({ ...prev, fontSize: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                            className="w-full px-3 text-black py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                           >
                             <option value="small">Small</option>
                             <option value="medium">Medium</option>
@@ -581,7 +605,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between py-3 border-b border-gray-200">
                           <div>
                             <p className="text-sm font-semibold text-gray-900">Compact Mode</p>
-                            <p className="text-xs text-gray-600">Reduce spacing for more content</p>
+                            <p className="text-sm text-gray-600">Reduce spacing for more content</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input
@@ -597,7 +621,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between py-3">
                           <div>
                             <p className="text-sm font-semibold text-gray-900">Show Avatars</p>
-                            <p className="text-xs text-gray-600">Display user avatars in lists</p>
+                            <p className="text-sm text-gray-600">Display user avatars in lists</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input

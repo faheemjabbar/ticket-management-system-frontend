@@ -29,7 +29,7 @@ export default function PriorityBadge({ priority }: PriorityBadgeProps) {
   const Icon = icons[priority];
 
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${styles[priority]}`}>
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-sm font-medium border ${styles[priority]}`}>
       <Icon className="w-3 h-3" />
       {labels[priority]}
     </span>

@@ -5,7 +5,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'developer' | 'qa';
+  role: 'admin' | 'developer' | 'qa' | 'superadmin';
   avatar?: string;
   isActive: boolean;
   bio?: string;
@@ -43,7 +43,7 @@ export interface Project {
   teamMembers: {
     userId: string;
     userName: string;
-    role: 'admin' | 'qa' | 'developer';
+    role: 'admin' | 'qa' | 'developer' | 'superadmin';
     assignedAt: string;
   }[];
   startDate: string;
@@ -89,6 +89,25 @@ export interface HistoryEntry {
   action: string;
   details: string;
   timestamp: string;
+}
+
+export interface NotificationPreferences {
+  emailNotifications: boolean;
+  ticketAssigned: boolean;
+  ticketUpdated: boolean;
+  ticketClosed: boolean;
+  weeklyDigest: boolean;
+  mentionNotifications: boolean;
+}
+
+export interface FileUploadResponse {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+  uploadedBy: string;
+  uploadedAt: string;
 }
 
 // API Response types
@@ -143,6 +162,18 @@ export const userAPI = {
     newPassword: string;
   }): Promise<{ message: string }> => {
     const response = await axiosInstance.put(`/api/users/${id}/password`, data);
+    return response.data;
+  },
+
+  // Get notification preferences
+  getNotificationPreferences: async (id: string): Promise<NotificationPreferences> => {
+    const response = await axiosInstance.get(`/api/users/${id}/notification-preferences`);
+    return response.data;
+  },
+
+  // Update notification preferences
+  updateNotificationPreferences: async (id: string, preferences: NotificationPreferences): Promise<NotificationPreferences> => {
+    const response = await axiosInstance.put(`/api/users/${id}/notification-preferences`, preferences);
     return response.data;
   },
 };
@@ -333,6 +364,42 @@ export const authAPI = {
   // Get current user
   getCurrentUser: async (): Promise<User> => {
     const response = await axiosInstance.get('/auth/me');
+    return response.data;
+  },
+};
+
+// File Upload API functions
+export const uploadAPI = {
+  // Upload file
+  upload: async (file: File, onProgress?: (progress: number) => void): Promise<FileUploadResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axiosInstance.post('/api/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
+      },
+    });
+    return response.data;
+  },
+
+  // Download file
+  download: async (fileId: string): Promise<Blob> => {
+    const response = await axiosInstance.get(`/api/upload/${fileId}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  // Delete file
+  delete: async (fileId: string): Promise<{ message: string }> => {
+    const response = await axiosInstance.delete(`/api/upload/${fileId}`);
     return response.data;
   },
 };

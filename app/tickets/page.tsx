@@ -166,7 +166,7 @@ export default function TicketsListPage() {
     router.push(`/tickets/${ticketId}`);
   };
 
-  const canCreateTicket = user?.role === 'qa' || user?.role === 'admin';
+  const canCreateTicket = user?.role === 'qa' || user?.role === 'admin' || user?.role === 'superadmin';
 
   // Helper function to format date
   const formatDate = (dateString: string) => {

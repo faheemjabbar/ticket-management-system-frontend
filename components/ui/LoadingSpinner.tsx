@@ -21,7 +21,7 @@ const LoadingSpinner = memo(function LoadingSpinner({
   };
 
   const textSizeClasses = {
-    sm: 'text-xs',
+    sm: 'text-sm',
     md: 'text-sm',
     lg: 'text-base',
     xl: 'text-lg',

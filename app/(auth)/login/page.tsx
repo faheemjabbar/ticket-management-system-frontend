@@ -30,7 +30,7 @@ const LoginPage = () => {
       <header className="px-8 py-6">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 bg-[#F97316] rounded flex items-center justify-center">
-            <span className="text-white text-xs font-bold">T</span>
+            <span className="text-white text-sm font-bold">T</span>
           </div>
           <span className="text-white text-xl font-bold">
             Tick<span className="text-[#F97316]">Flo</span>
@@ -39,68 +39,69 @@ const LoginPage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-start justify-center pt-12 px-4">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-8">
+      <main className="flex-1 flex items-center justify-center px-4 py-4">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
           {/* Title */}
-          <h1 className="text-[#F97316] text-3xl font-bold text-center mb-8">Login</h1>
+          <h1 className="text-[#F97316] text-2xl font-bold text-center mb-1">Login</h1>
+          <p className="text-gray-600 text-sm text-center mb-4">Welcome back to TickFlo</p>
 
           {/* Form */}
-          <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+          <form className="space-y-3" onSubmit={handleSubmit(onSubmit)}>
             {/* Email */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Email</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Email</label>
               <input
                 type="email"
-                placeholder="Email"
+                placeholder="john@example.com"
                 {...register("email")}
-                className="w-full px-4 py-2.5 rounded border border-gray-300 focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition-all placeholder:text-gray-400 text-black text-sm"
+                className="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition-all placeholder:text-gray-400 text-black text-sm"
               />
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-red-500 text-sm mt-0.5">{errors.email.message}</p>}
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Password</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Password"
+                  placeholder="••••••••"
                   {...register("password")}
-                  className="w-full px-4 py-2.5 rounded border border-gray-300 focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition-all placeholder:text-gray-400 text-black text-sm"
+                  className="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition-all placeholder:text-gray-400 text-black text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+              {errors.password && <p className="text-red-500 text-sm mt-0.5">{errors.password.message}</p>}
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold py-3 rounded transition-all disabled:opacity-50"
+              className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold py-2.5 rounded transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4 text-sm"
             >
               {isSubmitting ? "Signing in..." : "Login"}
             </button>
 
             {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 text-[#F97316] border-gray-300 rounded focus:ring-[#F97316]" />
+            <div className="flex items-center justify-between text-sm mt-3">
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" className="w-3.5 h-3.5 text-[#F97316] border-gray-300 rounded focus:ring-[#F97316]" />
                 <span className="text-gray-700">Remember Me</span>
               </label>
-              <a href="#" className="text-[#F97316] hover:underline font-medium">
+              <Link href="/forgot-password" className="text-[#F97316] hover:underline font-medium">
                 Forgot Password?
-              </a>
+              </Link>
             </div>
 
             {/* Sign Up Link */}
-            <p className="text-center text-sm text-gray-600 mt-6">
+            <p className="text-center text-sm text-gray-600 mt-4">
               Don't have an account?{' '}
               <Link href="/register" className="text-[#F97316] font-bold hover:underline">
                 Sign up

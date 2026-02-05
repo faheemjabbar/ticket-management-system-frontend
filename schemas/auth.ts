@@ -13,7 +13,7 @@ export const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string().min(6),
-  role: z.enum(["admin", "developer", "qa"] as const, "Role must be admin, developer, or qa"),
+  role: z.enum(["admin", "developer", "qa", "superadmin"] as const, "Role must be admin, developer, qa, or superadmin"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords must match",
   path: ["confirmPassword"],

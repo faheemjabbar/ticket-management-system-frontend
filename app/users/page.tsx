@@ -48,18 +48,20 @@ export default function UsersPage() {
 
         setProjects(projectsResponse.projects);
         
-        // Map users with their project names
-        const usersWithProjects = usersResponse.users.map(user => {
-          // Find projects where this user is a team member
-          const userProjects = projectsResponse.projects.filter(project =>
-            project.teamMembers.some(member => member.userId === user.id)
-          );
-          
-          return {
-            ...user,
-            projectNames: userProjects.map(p => p.name)
-          };
-        });
+        // Map users with their project names and filter out superadmin from regular users
+        const usersWithProjects = usersResponse.users
+          .filter(user => user.role !== 'superadmin') // Hide superadmin from list
+          .map(user => {
+            // Find projects where this user is a team member
+            const userProjects = projectsResponse.projects.filter(project =>
+              project.teamMembers.some(member => member.userId === user.id)
+            );
+            
+            return {
+              ...user,
+              projectNames: userProjects.map(p => p.name)
+            };
+          });
         
         setUsers(usersWithProjects);
         
@@ -180,16 +182,16 @@ export default function UsersPage() {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-xl font-semibold text-gray-900 tracking-tight">User Management</h1>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-500 mt-0.5">
                   Manage team members and their access
                 </p>
               </div>
 
               <button
                 onClick={() => toast('Add user modal coming soon!')}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-sm font-medium hover:bg-orange-700 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-xs font-medium hover:bg-orange-700 transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
                 Add User
               </button>
             </div>
@@ -200,7 +202,7 @@ export default function UsersPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Total Users</div>
-                    <div className="text-2xl font-semibold text-gray-900 tabular-nums">{users.length}</div>
+                    <div className="text-xl font-semibold text-gray-900 tabular-nums">{users.length}</div>
                   </div>
                 </div>
               </div>
@@ -209,7 +211,7 @@ export default function UsersPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Active</div>
-                    <div className="text-2xl font-semibold text-green-600 tabular-nums">
+                    <div className="text-xl font-semibold text-green-600 tabular-nums">
                       {users.filter(u => u.isActive).length}
                     </div>
                   </div>
@@ -220,7 +222,7 @@ export default function UsersPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Developers</div>
-                    <div className="text-2xl font-semibold text-gray-900 tabular-nums">
+                    <div className="text-xl font-semibold text-gray-900 tabular-nums">
                       {users.filter(u => u.role === 'developer').length}
                     </div>
                   </div>
@@ -231,7 +233,7 @@ export default function UsersPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">QA Team</div>
-                    <div className="text-2xl font-semibold text-gray-900 tabular-nums">
+                    <div className="text-xl font-semibold text-gray-900 tabular-nums">
                       {users.filter(u => u.role === 'qa').length}
                     </div>
                   </div>
@@ -244,13 +246,13 @@ export default function UsersPage() {
               <div className="grid grid-cols-4 gap-2">
                 <div className="col-span-2">
                   <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
                     <input
                       type="text"
                       placeholder="Search by name or email..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded text-sm text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                      className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded text-xs text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
                     />
                   </div>
                 </div>
@@ -259,12 +261,13 @@ export default function UsersPage() {
                   <select
                     value={filterRole}
                     onChange={(e) => setFilterRole(e.target.value)}
-                    className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-sm text-gray-900 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                    className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs text-gray-900 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
                   >
                     <option value="all">All Roles</option>
                     <option value="admin">Admin</option>
                     <option value="qa">QA</option>
                     <option value="developer">Developer</option>
+                    {/* SuperAdmin option hidden from regular users */}
                   </select>
                 </div>
 
@@ -272,7 +275,7 @@ export default function UsersPage() {
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-sm text-gray-900 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                    className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs text-gray-900 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
                   >
                     <option value="all">All Status</option>
                     <option value="active">Active</option>
@@ -319,9 +322,9 @@ export default function UsersPage() {
                               </span>
                             </div>
                             <div className="min-w-0">
-                              <div className="text-sm font-medium text-gray-900 truncate">{user.name}</div>
-                              <div className="text-xs text-gray-500 flex items-center gap-1 truncate">
-                                <Mail className="w-3 h-3 flex-shrink-0" />
+                              <div className="text-xs font-medium text-gray-900 truncate">{user.name}</div>
+                              <div className="text-[10px] text-gray-500 flex items-center gap-1 truncate">
+                                <Mail className="w-2.5 h-2.5 flex-shrink-0" />
                                 <span className="truncate">{user.email}</span>
                               </div>
                             </div>
@@ -333,26 +336,26 @@ export default function UsersPage() {
                           </span>
                         </td>
                         <td className="px-3 py-2.5">
-                          <div className="text-xs text-gray-600 line-clamp-2 max-w-xs">
+                          <div className="text-[10px] text-gray-600 line-clamp-2 max-w-xs">
                             {user.projectNames.length > 0 ? user.projectNames.join(', ') : <span className="text-gray-400">No projects</span>}
                           </div>
                         </td>
                         <td className="px-3 py-2.5">
                           {user.isActive ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 rounded text-xs font-medium border border-green-200">
-                              <UserCheck className="w-3 h-3" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 rounded text-[10px] font-medium border border-green-200">
+                              <UserCheck className="w-2.5 h-2.5" />
                               Active
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-600 rounded text-xs font-medium border border-gray-200">
-                              <UserX className="w-3 h-3" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-50 text-gray-600 rounded text-[10px] font-medium border border-gray-200">
+                              <UserX className="w-2.5 h-2.5" />
                               Inactive
                             </span>
                           )}
                         </td>
                         <td className="px-3 py-2.5">
-                          <div className="text-xs text-gray-600 flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-gray-400" />
+                          <div className="text-[10px] text-gray-600 flex items-center gap-1">
+                            <Calendar className="w-2.5 h-2.5 text-gray-400" />
                             <span className="tabular-nums">{formatDate(user.lastLogin)}</span>
                           </div>
                         </td>
@@ -363,7 +366,7 @@ export default function UsersPage() {
                               className="p-1 hover:bg-gray-100 rounded transition-colors"
                               title="Edit user"
                             >
-                              <Edit className="w-3.5 h-3.5 text-gray-600" />
+                              <Edit className="w-3 h-3 text-gray-600" />
                             </button>
                             <button
                               onClick={() => handleToggleStatus(user.id)}
@@ -371,9 +374,9 @@ export default function UsersPage() {
                               title={user.isActive ? 'Deactivate' : 'Activate'}
                             >
                               {user.isActive ? (
-                                <UserX className="w-3.5 h-3.5 text-orange-600" />
+                                <UserX className="w-3 h-3 text-orange-600" />
                               ) : (
-                                <UserCheck className="w-3.5 h-3.5 text-green-600" />
+                                <UserCheck className="w-3 h-3 text-green-600" />
                               )}
                             </button>
                             <button
@@ -381,7 +384,7 @@ export default function UsersPage() {
                               className="p-1 hover:bg-red-50 rounded transition-colors"
                               title="Delete user"
                             >
-                              <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                              <Trash2 className="w-3 h-3 text-red-600" />
                             </button>
                           </div>
                         </td>
@@ -393,9 +396,9 @@ export default function UsersPage() {
 
               {filteredUsers.length === 0 && (
                 <div className="text-center py-8">
-                  <UserX className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-900">No users found</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Try adjusting your filters</p>
+                  <UserX className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-xs font-medium text-gray-900">No users found</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Try adjusting your filters</p>
                 </div>
               )}
             </div>

@@ -326,7 +326,7 @@ export default function TicketForm({ mode, initialData, ticketId }: TicketFormPr
             {formData.labels.map((label, idx) => (
               <span
                 key={idx}
-                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium"
+                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm font-medium"
               >
                 {label}
                 <button
