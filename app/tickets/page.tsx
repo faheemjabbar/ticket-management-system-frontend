@@ -63,6 +63,11 @@ export default function TicketsListPage() {
 
   // Load data on component mount
   useEffect(() => {
+    // Redirect superadmin to organizations
+    if (user && user.role === 'superadmin') {
+      router.push('/organizations');
+      return;
+    }
     const loadData = async () => {
       try {
         setLoading(true);
@@ -76,8 +81,19 @@ export default function TicketsListPage() {
         setTickets(ticketsResponse.tickets);
 
         // Add "All Projects" option to projects list
-        const projectsWithAll = [
-          { id: 'all', name: 'All Projects', description: '', status: 'active' as const, createdBy: '', teamMembers: [], startDate: '', createdAt: '', updatedAt: '' },
+        const projectsWithAll: (Project & { id: string })[] = [
+          { 
+            id: 'all', 
+            name: 'All Projects', 
+            description: '', 
+            status: 'active' as const, 
+            organization: { id: '', name: '' },
+            createdBy: '', 
+            teamMembers: [], 
+            startDate: '', 
+            createdAt: '', 
+            updatedAt: '' 
+          },
           ...projectsResponse.projects
         ];
         setProjects(projectsWithAll);
@@ -90,7 +106,7 @@ export default function TicketsListPage() {
     };
 
     loadData();
-  }, []);
+  }, [user, router]);
 
   // Filter and sort tickets
   const filteredAndSortedTickets = useMemo(() => {
@@ -166,7 +182,7 @@ export default function TicketsListPage() {
     router.push(`/tickets/${ticketId}`);
   };
 
-  const canCreateTicket = user?.role === 'qa' || user?.role === 'admin' || user?.role === 'superadmin';
+  const canCreateTicket = user?.role === 'qa' || user?.role === 'admin';
 
   // Helper function to format date
   const formatDate = (dateString: string) => {

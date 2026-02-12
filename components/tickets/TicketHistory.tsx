@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Clock, User, Activity } from 'lucide-react';
 import { historyAPI, HistoryEntry } from '@/lib/api';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { toast } from 'react-hot-toast';
 
 interface TicketHistoryProps {

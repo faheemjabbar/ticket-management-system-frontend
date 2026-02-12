@@ -5,9 +5,18 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import TicketForm from '@/components/tickets/TicketForm';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CreateTicketPage() {
   const router = useRouter();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user && user.role === 'superadmin') {
+      router.push('/organizations');
+    }
+  }, [user, router]);
 
   return (
     <ProtectedRoute>
