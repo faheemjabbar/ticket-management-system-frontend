@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { projectAPI, ticketAPI, type Project } from '@/lib/api';
@@ -19,7 +20,8 @@ import {
   Clock,
   Edit,
   Trash2,
-  Eye
+  Eye,
+  Building2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -34,6 +36,7 @@ interface ProjectWithStats extends Project {
 
 export default function ProjectsPage() {
   const router = useRouter();
+  const { user } = useAuth();
   
   // State
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
@@ -52,6 +55,11 @@ export default function ProjectsPage() {
     const loadProjects = async () => {
       try {
         setLoading(true);
+        // Redirect superadmin to organizations
+        if (user && user.role === 'superadmin') {
+          router.push('/organizations');
+          return;
+        }
         
         // Get all projects
         const projectsResponse = await projectAPI.getAll({ limit: 100 });
@@ -93,7 +101,7 @@ export default function ProjectsPage() {
     };
 
     loadProjects();
-  }, []);
+  }, [router, user]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -341,6 +349,13 @@ export default function ProjectsPage() {
 
                   {/* Card Body */}
                   <div className="p-3 space-y-2">
+                    {project.organization && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
+                        <Building2 className="w-3 h-3 text-orange-500 flex-shrink-0" />
+                        <span className="truncate">{project.organization.name}</span>
+                      </div>
+                    )}
+                    
                     <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
                       <Users className="w-3 h-3 text-gray-400 flex-shrink-0" />
                       <span>{project.teamMembers.length} member{project.teamMembers.length !== 1 ? 's' : ''}</span>
@@ -419,7 +434,10 @@ export default function ProjectsPage() {
                 <Folder className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <h3 className="text-base font-semibold text-gray-900 mb-1">No projects found</h3>
                 <p className="text-sm text-gray-500 mb-4">
-                  {searchQuery ? 'Try adjusting your search criteria' : 'Get started by creating your first project'}
+                  {searchQuery 
+                    ? 'Try adjusting your search criteria' 
+                    : 'Get started by creating your first project in your organization'
+                  }
                 </p>
                 <button
                   onClick={handleCreateProject}
