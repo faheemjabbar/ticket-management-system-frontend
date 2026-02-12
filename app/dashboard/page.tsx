@@ -205,6 +205,11 @@ export default function DashboardPage() {
     const loadData = async () => {
       // Don't load if no user (logged out)
       if (!user) return;
+      // Superadmin should not access dashboard tickets/projects — redirect to organizations
+      if (user.role === 'superadmin') {
+        router.push('/organizations');
+        return;
+      }
       
       try {
         setLoading(true);
@@ -214,11 +219,22 @@ export default function DashboardPage() {
         const dashboardTickets = ticketsResponse.tickets.map(convertToDashboardTicket);
         setTickets(dashboardTickets);
 
-        // Load projects only for QA, Admin, and SuperAdmin
-        if (user && (user.role === 'qa' || user.role === 'admin' || user.role === 'superadmin')) {
+        // Load projects only for QA and Admin
+        if (user && (user.role === 'qa' || user.role === 'admin')) {
           const projectsResponse = await projectAPI.getAll({ limit: 100 });
           const projectsWithAll = [
-            { id: 'all', name: 'All Projects', description: '', status: 'active' as const, createdBy: '', teamMembers: [], startDate: '', createdAt: '', updatedAt: '' },
+            { 
+              id: 'all', 
+              name: 'All Projects', 
+              description: '', 
+              status: 'active' as const, 
+              organization: { id: '', name: '' },  // UPDATED
+              createdBy: '', 
+              teamMembers: [], 
+              startDate: '', 
+              createdAt: '', 
+              updatedAt: '' 
+            },
             ...projectsResponse.projects
           ];
           setProjects(projectsWithAll);
@@ -468,6 +484,23 @@ export default function DashboardPage() {
         activityStats={developerStats}
       >
         <div className="space-y-3">
+          {/* Organization Context Header */}
+          {user && (
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">Ticket Dashboard</h1>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {user.role === 'superadmin' 
+                    ? 'Viewing all organizations' 
+                    : user.organization 
+                      ? `Organization: ${user.organization.name}`
+                      : 'Your tickets and projects'
+                  }
+                </p>
+              </div>
+            </div>
+          )}
+          
           {/* Header with Search and Actions */}
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
             <div className="flex-1 max-w-md">
@@ -484,8 +517,8 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex flex-col items-end gap-3">
-              {/* Project Filter Dropdown - Only for QA, Admin, and SuperAdmin */}
-              {user && (user.role === 'qa' || user.role === 'admin' || user.role === 'superadmin') && (
+              {/* Project Filter Dropdown - Only for QA and Admin */}
+              {user && (user.role === 'qa' || user.role === 'admin') && (
                 <div className="relative">
                   <button 
                     onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
