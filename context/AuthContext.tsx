@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const { access_token: token, user } = res.data;
 
-      // Store token and user in localStorage
+      // Store token and user in localStorage (now includes organizationId)
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
