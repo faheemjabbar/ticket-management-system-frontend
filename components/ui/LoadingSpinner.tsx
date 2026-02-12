@@ -28,7 +28,7 @@ const LoadingSpinner = memo(function LoadingSpinner({
   };
 
   const spinner = (
-    <div className={`flex flex-col items-center justify-center gap-3 ${fullScreen ? 'min-h-screen' : 'py-8'}`}>
+    <div className="flex flex-col items-center justify-center gap-3">
       <div className="relative">
         <div className={`${sizeClasses[size]} border-4 border-gray-200 rounded-full`}></div>
         <div className={`${sizeClasses[size]} border-4 border-orange-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0`}></div>
@@ -49,7 +49,11 @@ const LoadingSpinner = memo(function LoadingSpinner({
     );
   }
 
-  return spinner;
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      {spinner}
+    </div>
+  );
 });
 
 export default LoadingSpinner;
