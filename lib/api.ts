@@ -6,6 +6,11 @@ export interface User {
   name: string;
   email: string;
   role: 'admin' | 'developer' | 'qa' | 'superadmin';
+  organization?: {  // UPDATED - now an object
+    id: string;
+    name: string;
+  } | null;
+  createdBy?: string;
   avatar?: string;
   isActive: boolean;
   bio?: string;
@@ -39,11 +44,15 @@ export interface Project {
   name: string;
   description: string;
   status: 'active' | 'archived' | 'completed';
+  organization: {  // UPDATED - now an object
+    id: string;
+    name: string;
+  };
   createdBy: string;
   teamMembers: {
     userId: string;
     userName: string;
-    role: 'admin' | 'qa' | 'developer' | 'superadmin';
+    role: 'admin' | 'qa' | 'developer';  // REMOVED 'superadmin'
     assignedAt: string;
   }[];
   startDate: string;
@@ -110,6 +119,16 @@ export interface FileUploadResponse {
   uploadedAt: string;
 }
 
+export interface Organization {
+  id: string;
+  name: string;
+  description: string;
+  createdBy: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // API Response types
 interface PaginatedResponse {
   total: number;
@@ -129,6 +148,19 @@ export const userAPI = {
     limit?: number;
   }): Promise<PaginatedResponse & { users: User[] }> => {
     const response = await axiosInstance.get('/api/users', { params });
+    return response.data;
+  },
+
+  // Create user (Admin/Superadmin only)
+  create: async (data: {
+    name: string;
+    email: string;
+    password: string;
+    role: 'admin' | 'developer' | 'qa';
+    organizationId: string;  // Required - admin's organization ID
+    bio?: string;
+  }): Promise<User> => {
+    const response = await axiosInstance.post('/api/users', data);
     return response.data;
   },
 
@@ -400,6 +432,53 @@ export const uploadAPI = {
   // Delete file
   delete: async (fileId: string): Promise<{ message: string }> => {
     const response = await axiosInstance.delete(`/api/upload/${fileId}`);
+    return response.data;
+  },
+};
+
+// Organization API functions (Superadmin only)
+export const organizationAPI = {
+  // Get all organizations
+  getAll: async (): Promise<Organization[]> => {
+    const response = await axiosInstance.get('/api/organizations');
+    return response.data;
+  },
+
+  // Get organization by ID
+  getById: async (id: string): Promise<Organization> => {
+    const response = await axiosInstance.get(`/api/organizations/${id}`);
+    return response.data;
+  },
+
+  // Create organization with admin user (atomic transaction)
+  createWithAdmin: async (data: {
+    name: string;
+    description?: string;
+    adminUser: {
+      name: string;
+      email: string;
+      password: string;
+    };
+  }): Promise<{
+    organization: Organization;
+    admin: User;
+  }> => {
+    const response = await axiosInstance.post('/api/organizations/with-admin', data);
+    return response.data;
+  },
+
+  // Update organization
+  update: async (id: string, data: {
+    name?: string;
+    description?: string;
+  }): Promise<Organization> => {
+    const response = await axiosInstance.put(`/api/organizations/${id}`, data);
+    return response.data;
+  },
+
+  // Delete organization
+  delete: async (id: string): Promise<{ message: string }> => {
+    const response = await axiosInstance.delete(`/api/organizations/${id}`);
     return response.data;
   },
 };
