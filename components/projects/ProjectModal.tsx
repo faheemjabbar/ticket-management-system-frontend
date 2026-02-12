@@ -41,7 +41,10 @@ export default function ProjectModal({ isOpen, onClose, project, mode }: Project
         try {
           setLoading(true);
           const usersResponse = await userAPI.getAll({ limit: 100 });
-          setAllUsers(usersResponse.users);
+          const filteredUsers = usersResponse.users.filter(
+          user => user.role !== 'superadmin'
+        );
+          setAllUsers(filteredUsers);
         } catch {
           toast.error('Failed to load users');
         } finally {
@@ -114,10 +117,7 @@ export default function ProjectModal({ isOpen, onClose, project, mode }: Project
       toast.error('Start date is required');
       return;
     }
-    if (formData.teamMembers.length === 0) {
-      toast.error('Please add at least one team member');
-      return;
-    }
+    // Team members are now OPTIONAL - removed validation
 
     setIsSubmitting(true);
 
@@ -133,7 +133,9 @@ export default function ProjectModal({ isOpen, onClose, project, mode }: Project
             const user = allUsers.find(u => u.id === userId);
             return {
               userId,
-              role: user?.role || 'developer',
+              role: user?.role === 'admin' || user?.role === 'qa' || user?.role === 'developer' 
+                ? user.role 
+                : 'developer',
             };
           }),
         };
@@ -154,7 +156,9 @@ export default function ProjectModal({ isOpen, onClose, project, mode }: Project
             return {
               userId,
               userName: user?.name || 'Unknown User',
-              role: user?.role || 'developer',
+              role: user?.role === 'admin' || user?.role === 'qa' || user?.role === 'developer'
+                ? user.role
+                : 'developer',
               assignedAt: existingMember?.assignedAt || new Date().toISOString(),
             };
           }),
@@ -331,7 +335,7 @@ export default function ProjectModal({ isOpen, onClose, project, mode }: Project
               <div>
                 <label className="flex items-center gap-1 text-[10px] font-bold text-gray-900 mb-1 uppercase tracking-wide">
                   <Users className="w-3 h-3" />
-                  Team Members <span className="text-red-500">*</span>
+                  Team Members <span className="text-gray-400">(Optional)</span>
                 </label>
                 <p className="text-[10px] text-gray-500 mb-2">Select team members for this project</p>
                 
