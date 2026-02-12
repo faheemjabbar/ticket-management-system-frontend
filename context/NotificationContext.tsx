@@ -102,7 +102,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       };
       
       setNotifications(prev => [notification, ...prev]);
-      toast.info(notification.message, { icon: '🔄', duration: 4000 });
+      toast(notification.message, { icon: '🔄', duration: 4000 });
       window.dispatchEvent(new CustomEvent('ticket-updated'));
     });
 
@@ -160,7 +160,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       };
       
       setNotifications(prev => [notification, ...prev]);
-      toast.info(notification.message, { icon: '💬', duration: 4000 });
+      toast(notification.message, { icon: '💬', duration: 4000 });
       window.dispatchEvent(new CustomEvent('ticket-updated'));
     });
 
