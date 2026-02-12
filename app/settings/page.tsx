@@ -279,6 +279,7 @@ export default function SettingsPage() {
                           />
                         </div>
 
+                        {user?.role !== 'superadmin' && (
                         <div>
                           <label className="block text-sm font-semibold text-gray-900 mb-1">
                             Role
@@ -289,9 +290,10 @@ export default function SettingsPage() {
                             disabled
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-600 capitalize"
                           />
+                          
                           <p className="text-sm text-gray-500 mt-1">Contact admin to change your role</p>
                         </div>
-
+                          )}
                         <div>
                           <label className="block text-sm font-semibold text-gray-900 mb-1">
                             Bio
