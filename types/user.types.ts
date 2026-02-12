@@ -5,11 +5,18 @@ export enum UserRole {
   SUPERADMIN = 'superadmin'
 }
 
+export interface Organization {
+  id: string;
+  name: string;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
   role: 'admin' | 'developer' | 'qa' | 'superadmin';
+  organization?: Organization | null;  // UPDATED - now an object with id and name
+  createdBy?: string;
   avatar?: string;
   projects?: string[];
   isActive: boolean;

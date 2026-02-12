@@ -12,11 +12,13 @@ import {
   X,
   Settings,
   LogOut,
-  Folder
+  Folder,
+  Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import CreateTicketModal from '@/components/tickets/CreateTicketModal';
 import { NotificationPanel } from './NotificationPanel';
+import OrganizationBadge from '@/components/ui/OrganizationBadge';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -33,28 +35,34 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
       name: 'Overview',
       href: '/dashboard',
       icon: LayoutDashboard,
-      roles: ['admin', 'developer', 'qa', 'superadmin'],
+      roles: ['admin', 'developer', 'qa'],
     },
   ];
 
   const staffNavigation = [
     {
+      name: 'Organizations',
+      href: '/organizations',
+      icon: Building2,
+      roles: ['superadmin'],
+    },
+    {
       name: 'Projects',
       href: '/projects',
       icon: Folder,
-      roles: ['admin', 'qa', 'superadmin'],
+      roles: ['admin', 'qa'],
     },
     {
       name: 'Users',
       href: '/users',
       icon: Users,
-      roles: ['admin', 'superadmin'],
+      roles: ['admin'],
     },
     {
       name: 'Settings',
       href: '/settings',
       icon: Settings,
-      roles: ['admin', 'superadmin'],
+      roles: ['admin','superadmin'],
     },
   ];
 
@@ -112,8 +120,11 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
         </div>
 
         {/* User Info & Actions */}
-        <div className="p-4 border-b border-gray-700 flex-shrink-0">
-          <div className="mb-3">
+        <div className="p-4 border-b border-gray-700 flex-shrink-0 space-y-3">
+          {/* Organization Badge */}
+          <OrganizationBadge />
+          
+          <div>
             <div className="text-sm font-medium text-white">
               {user?.name || 'Guest User'}
             </div>
@@ -122,8 +133,8 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
             </div>
           </div>
           
-          {/* Only show New Ticket button for QA, Admin, and SuperAdmin */}
-          {user && (user.role === 'qa' || user.role === 'admin' || user.role === 'superadmin') && (
+          {/* Only show New Ticket button for QA and Admin */}
+          {user && (user.role === 'qa' || user.role === 'admin') && (
             <button
               onClick={() => setIsCreateModalOpen(true)}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
