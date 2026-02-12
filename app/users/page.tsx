@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { userAPI, projectAPI, type User, type Project } from '@/lib/api';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import CreateUserModal from '@/components/users/CreateUserModal';
 import { 
   Search, 
   Plus, 
@@ -14,7 +17,8 @@ import {
   UserCheck, 
   UserX,
   Mail,
-  Calendar
+  Calendar,
+  Building2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -23,6 +27,8 @@ interface UserWithProjects extends User {
 }
 
 export default function UsersPage() {
+  const router = useRouter();
+  const { user: currentUser } = useAuth();
   // State
   const [users, setUsers] = useState<UserWithProjects[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -33,47 +39,64 @@ export default function UsersPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserWithProjects | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Load users and projects
+  // Load users and projects - extracted as callable function
+  const loadData = async () => {
+    try {
+      console.log('Loading users data...');
+      setLoading(true);
+      
+      // Load users and projects in parallel
+      const [usersResponse, projectsResponse] = await Promise.all([
+        userAPI.getAll({ limit: 100 }),
+        projectAPI.getAll({ limit: 100 })
+      ]);
+
+      console.log('Users response:', usersResponse);
+      console.log('Total users from API:', usersResponse.users.length);
+
+      setProjects(projectsResponse.projects);
+      
+      // Map users with their project names and filter out superadmin from regular users
+      const usersWithProjects = usersResponse.users
+        .filter(user => user.role !== 'superadmin') // Hide superadmin from list
+        .map(user => {
+          // Find projects where this user is a team member
+          const userProjects = projectsResponse.projects.filter(project =>
+            project.teamMembers.some(member => member.userId === user.id)
+          );
+          
+          return {
+            ...user,
+            projectNames: userProjects.map(p => p.name)
+          };
+        });
+      
+      console.log('Filtered users (without superadmin):', usersWithProjects.length);
+      setUsers(usersWithProjects);
+      
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      toast.error('Failed to load users data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load users and projects on mount
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        
-        // Load users and projects in parallel
-        const [usersResponse, projectsResponse] = await Promise.all([
-          userAPI.getAll({ limit: 100 }),
-          projectAPI.getAll({ limit: 100 })
-        ]);
-
-        setProjects(projectsResponse.projects);
-        
-        // Map users with their project names and filter out superadmin from regular users
-        const usersWithProjects = usersResponse.users
-          .filter(user => user.role !== 'superadmin') // Hide superadmin from list
-          .map(user => {
-            // Find projects where this user is a team member
-            const userProjects = projectsResponse.projects.filter(project =>
-              project.teamMembers.some(member => member.userId === user.id)
-            );
-            
-            return {
-              ...user,
-              projectNames: userProjects.map(p => p.name)
-            };
-          });
-        
-        setUsers(usersWithProjects);
-        
-      } catch {
-        toast.error('Failed to load users data');
-      } finally {
-        setLoading(false);
-      }
+    // Redirect superadmin to organizations
+    if (currentUser && currentUser.role === 'superadmin') {
+      router.push('/organizations');
+      return;
+    }
+    const initLoad = async () => {
+      await loadData();
     };
 
-    loadData();
-  }, []);
+    initLoad();
+  }, [currentUser, router]);
 
   // Filter users
   const filteredUsers = useMemo(() => {
@@ -141,19 +164,6 @@ export default function UsersPage() {
     }
   };
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
-      case 'qa':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'developer':
-        return 'bg-green-50 text-green-700 border-green-200';
-      default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
-    }
-  };
-
   // Helper function to format date
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Never';
@@ -188,8 +198,10 @@ export default function UsersPage() {
               </div>
 
               <button
-                onClick={() => toast('Add user modal coming soon!')}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-xs font-medium hover:bg-orange-700 transition-colors"
+                onClick={() => setIsCreateModalOpen(true)}
+                disabled={currentUser?.role !== 'admin'}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-xs font-medium hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={currentUser?.role !== 'admin' ? 'Only admins can create users' : 'Add new user'}
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add User
@@ -298,6 +310,9 @@ export default function UsersPage() {
                         Role
                       </th>
                       <th className="px-3 py-2.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
+                        Organization
+                      </th>
+                      <th className="px-3 py-2.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
                         Projects
                       </th>
                       <th className="px-3 py-2.5 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
@@ -334,6 +349,16 @@ export default function UsersPage() {
                           <span className={`inline-flex text-gray-600 items-center px-2 py-0.5 rounded text-[10px]  uppercase tracking-wide `}>
                             {user.role}
                           </span>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {user.organization ? (
+                            <div className="flex items-center gap-1 text-[10px] text-gray-600">
+                              <Building2 className="w-3 h-3 text-orange-500" />
+                              <span className="truncate max-w-[120px]">{user.organization.name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-gray-400">System Admin</span>
+                          )}
                         </td>
                         <td className="px-3 py-2.5">
                           <div className="text-[10px] text-gray-600 line-clamp-2 max-w-xs">
@@ -398,7 +423,12 @@ export default function UsersPage() {
                 <div className="text-center py-8">
                   <UserX className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                   <p className="text-xs font-medium text-gray-900">No users found</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">Try adjusting your filters</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">
+                    {searchQuery || filterRole !== 'all' || filterStatus !== 'all'
+                      ? 'Try adjusting your filters'
+                      : 'No users in your organization yet'
+                    }
+                  </p>
                 </div>
               )}
             </div>
@@ -415,6 +445,13 @@ export default function UsersPage() {
             cancelText="Cancel"
             variant="danger"
             isLoading={isDeleting}
+          />
+
+          {/* Create User Modal */}
+          <CreateUserModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onSuccess={loadData}
           />
         </DashboardLayout>
       </ProtectedRoute>
