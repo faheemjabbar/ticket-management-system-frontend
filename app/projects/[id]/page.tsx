@@ -16,7 +16,8 @@ import {
   Clock,
   CheckCircle2,
   Ticket,
-  User
+  User,
+  Building2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -264,6 +265,15 @@ export default function ProjectDetailPage() {
                       <div>
                         <h3 className="text-sm font-bold text-gray-600 mb-3 uppercase">Project Information</h3>
                         <div className="space-y-3">
+                          {project.organization && (
+                            <div className="flex items-center gap-3">
+                              <Building2 className="w-4 h-4 text-orange-600" />
+                              <div>
+                                <p className="text-xs text-gray-600">Organization</p>
+                                <p className="text-sm font-semibold text-gray-900">{project.organization.name}</p>
+                              </div>
+                            </div>
+                          )}
                           <div className="flex items-center gap-3">
                             <Calendar className="w-4 h-4 text-gray-600" />
                             <div>
