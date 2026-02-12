@@ -4,11 +4,17 @@ export enum ProjectStatus {
   ARCHIVED = 'archived'
 }
 
+export interface Organization {
+  id: string;
+  name: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   description: string;
   status: 'active' | 'completed' | 'archived';
+  organization: Organization;  // UPDATED - now an object with id and name
   createdBy: string;
   teamMembers: TeamMember[];
   startDate: string;
