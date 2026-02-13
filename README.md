@@ -1,3 +1,13 @@
+⚠️ Prerequisites
+
+This repository depends on a separate NestJS backend API. Make sure you clone and configure the backend project first and follow its setup instructions before running this app.
+
+Access Flow:
+- First user must register as SuperAdmin
+- SuperAdmin can create Organizations
+- Organizations can create Admins
+- Admins can create Members (QA/Dev) and Projects
+
 # TickFlo
 
 A modern ticket management system for software development teams built with Next.js and TypeScript.
@@ -47,10 +57,6 @@ Open [http://localhost:3000](http://localhost:3000)
 npm run build
 npm start
 ```
-
-## Backend
-
-Requires a NestJS backend API. See backend repository for setup instructions.
 
 ## License
 
