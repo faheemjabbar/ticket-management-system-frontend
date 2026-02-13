@@ -371,7 +371,7 @@ export default function ProjectDetailPage() {
                           </div>
                         </div>
                         <span className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                          member.role === 'admin' 
+                          member.role === 'project-manager' 
                             ? 'bg-purple-100 text-purple-700 border border-purple-300'
                             : member.role === 'qa'
                             ? 'bg-blue-100 text-blue-700 border border-blue-300'

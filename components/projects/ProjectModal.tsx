@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { X, Plus, Folder, Calendar, Users, CheckCircle2 } from 'lucide-react';
 import { projectAPI, userAPI, type Project, type User } from '@/lib/api';
+import { useModalAnimation } from '@/hooks/useModalAnimation';
 
 interface ProjectModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface ProjectModalProps {
 export default function ProjectModal({ isOpen, onClose, project, mode }: ProjectModalProps) {
   const router = useRouter();
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const { isAnimating, shouldRender } = useModalAnimation(isOpen);
   
   // State
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -31,8 +33,6 @@ export default function ProjectModal({ isOpen, onClose, project, mode }: Project
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [shouldRender, setShouldRender] = useState(false);
 
   // Load users when modal opens
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function ProjectModal({ isOpen, onClose, project, mode }: Project
           setLoading(true);
           const usersResponse = await userAPI.getAll({ limit: 100 });
           const filteredUsers = usersResponse.users.filter(
-          user => user.role !== 'superadmin'
+          user => user.role !== 'admin'  // Filter out admin (was superadmin)
         );
           setAllUsers(filteredUsers);
         } catch {
@@ -79,26 +79,15 @@ export default function ProjectModal({ isOpen, onClose, project, mode }: Project
     }
   }, [mode, project]);
 
-  // Handle animation states
+  // Focus input when modal opens
   useEffect(() => {
-    if (isOpen) {
-      setShouldRender(true);
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => setIsAnimating(true), 10);
+    if (isOpen && isAnimating) {
       setTimeout(() => nameInputRef.current?.focus(), 200);
-    } else {
-      setIsAnimating(false);
-      const timer = setTimeout(() => {
-        setShouldRender(false);
-        document.body.style.overflow = 'unset';
-      }, 300);
-      return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, isAnimating]);
 
   const handleClose = () => {
-    setIsAnimating(false);
-    setTimeout(() => onClose(), 300);
+    onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -133,7 +122,7 @@ export default function ProjectModal({ isOpen, onClose, project, mode }: Project
             const user = allUsers.find(u => u.id === userId);
             return {
               userId,
-              role: user?.role === 'admin' || user?.role === 'qa' || user?.role === 'developer' 
+              role: user?.role === 'project-manager' || user?.role === 'qa' || user?.role === 'developer' 
                 ? user.role 
                 : 'developer',
             };
@@ -156,7 +145,7 @@ export default function ProjectModal({ isOpen, onClose, project, mode }: Project
             return {
               userId,
               userName: user?.name || 'Unknown User',
-              role: user?.role === 'admin' || user?.role === 'qa' || user?.role === 'developer'
+              role: user?.role === 'project-manager' || user?.role === 'qa' || user?.role === 'developer'
                 ? user.role
                 : 'developer',
               assignedAt: existingMember?.assignedAt || new Date().toISOString(),
@@ -368,7 +357,7 @@ export default function ProjectModal({ isOpen, onClose, project, mode }: Project
                               <p className="text-[10px] text-gray-600 capitalize">{user.role}</p>
                             </div>
                             <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-                              user.role === 'admin' 
+                              user.role === 'project-manager' 
                                 ? 'bg-purple-100 text-purple-700'
                                 : user.role === 'qa'
                                 ? 'bg-blue-100 text-blue-700'

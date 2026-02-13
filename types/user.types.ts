@@ -1,8 +1,8 @@
 export enum UserRole {
-  ADMIN = 'admin',
+  ADMIN = 'admin',  // System administrator
+  PROJECT_MANAGER = 'project-manager',  // Project manager (with hyphen to match backend)
   DEVELOPER = 'developer',
-  QA = 'qa',
-  SUPERADMIN = 'superadmin'
+  QA = 'qa'
 }
 
 export interface Organization {
@@ -14,7 +14,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'developer' | 'qa' | 'superadmin';
+  role: 'admin' | 'project-manager' | 'developer' | 'qa';
   organization?: Organization | null;  // UPDATED - now an object with id and name
   createdBy?: string;
   avatar?: string;

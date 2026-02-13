@@ -8,8 +8,8 @@ export default function OrganizationBadge() {
 
   if (!user) return null;
 
-  // Superadmin badge
-  if (user.role === 'superadmin') {
+  // Admin badge (was superadmin)
+  if (user.role === 'admin') {
     return (
       <div className="flex items-center gap-2 px-3 py-2 bg-red-900/20 border border-red-700/30 rounded-lg">
         <Shield className="w-4 h-4 text-red-400" />

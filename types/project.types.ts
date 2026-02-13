@@ -32,6 +32,6 @@ export interface Project {
 export interface TeamMember {
   userId: string;
   userName: string;
-  role: 'admin' | 'qa' | 'developer';
+  role: 'project-manager' | 'qa' | 'developer';
   assignedAt?: string;
 }

@@ -279,7 +279,7 @@ export default function SettingsPage() {
                           />
                         </div>
 
-                        {user?.role !== 'superadmin' && (
+                        {user?.role !== 'admin' && (
                         <div>
                           <label className="block text-sm font-semibold text-gray-900 mb-1">
                             Role

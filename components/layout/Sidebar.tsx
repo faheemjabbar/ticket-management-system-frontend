@@ -16,9 +16,8 @@ import {
   Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import CreateTicketModal from '@/components/tickets/CreateTicketModal';
-import { NotificationPanel } from './NotificationPanel';
 import OrganizationBadge from '@/components/ui/OrganizationBadge';
+import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -27,6 +26,7 @@ interface SidebarProps {
 
 const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const { user, hasRole, logout } = useAuth();
+  const router = useRouter();
   const pathname = usePathname();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -35,7 +35,13 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
       name: 'Overview',
       href: '/dashboard',
       icon: LayoutDashboard,
-      roles: ['admin', 'developer', 'qa'],
+      roles: ['project-manager', 'developer', 'qa'],  // Fixed: use hyphen
+    },
+    {
+      name: 'Tickets',
+      href: '/tickets',
+      icon: Ticket,
+      roles: ['project-manager', 'qa'],  // Fixed: use hyphen
     },
   ];
 
@@ -44,25 +50,25 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
       name: 'Organizations',
       href: '/organizations',
       icon: Building2,
-      roles: ['superadmin'],
+      roles: ['admin'],  // Only admin
     },
     {
       name: 'Projects',
       href: '/projects',
       icon: Folder,
-      roles: ['admin', 'qa'],
+      roles: ['project-manager', 'qa'],  // Fixed: use hyphen
     },
     {
       name: 'Users',
       href: '/users',
       icon: Users,
-      roles: ['admin'],
+      roles: ['project-manager', 'qa'],  // Fixed: use hyphen
     },
     {
       name: 'Settings',
       href: '/settings',
       icon: Settings,
-      roles: ['admin','superadmin'],
+      roles: ['project-manager', 'developer', 'qa', 'admin'],  // Fixed: use hyphen
     },
   ];
 
@@ -104,10 +110,7 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
             </span>
           </div>
           
-          <div className="flex items-center gap-2">
-            {/* Notification Panel */}
-            <NotificationPanel />
-            
+          <div className="flex items-center gap-2">         
             {/* Close button for mobile */}
             <button
               onClick={onClose}
@@ -133,10 +136,10 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
             </div>
           </div>
           
-          {/* Only show New Ticket button for QA and Admin */}
-          {user && (user.role === 'qa' || user.role === 'admin') && (
+          {/* Only show New Ticket button for QA and Project Manager (not admin) */}
+          {user && (user.role === 'qa' || user.role === 'project-manager') && (
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => router.push('/tickets/create')}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
             >
               <Plus className="w-4 h-4" />
@@ -230,12 +233,6 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
           </div>
         )}
       </aside>
-
-      {/* Create Ticket Modal */}
-      <CreateTicketModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
-      />
     </>
   );
 });

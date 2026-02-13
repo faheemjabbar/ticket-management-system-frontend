@@ -44,7 +44,6 @@ export default function UsersPage() {
   // Load users and projects - extracted as callable function
   const loadData = async () => {
     try {
-      console.log('Loading users data...');
       setLoading(true);
       
       // Load users and projects in parallel
@@ -53,14 +52,11 @@ export default function UsersPage() {
         projectAPI.getAll({ limit: 100 })
       ]);
 
-      console.log('Users response:', usersResponse);
-      console.log('Total users from API:', usersResponse.users.length);
-
       setProjects(projectsResponse.projects);
       
-      // Map users with their project names and filter out superadmin from regular users
+      // Map users with their project names and filter out admin from regular users
       const usersWithProjects = usersResponse.users
-        .filter(user => user.role !== 'superadmin') // Hide superadmin from list
+        .filter(user => user.role !== 'admin') // Hide admin from list
         .map(user => {
           // Find projects where this user is a team member
           const userProjects = projectsResponse.projects.filter(project =>
@@ -73,12 +69,14 @@ export default function UsersPage() {
           };
         });
       
-      console.log('Filtered users (without superadmin):', usersWithProjects.length);
       setUsers(usersWithProjects);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load users:', error);
-      toast.error('Failed to load users data');
+      // Don't show toast for 401 errors - axios interceptor handles it
+      if (error.response?.status !== 401) {
+        toast.error('Failed to load users data');
+      }
     } finally {
       setLoading(false);
     }
@@ -86,11 +84,15 @@ export default function UsersPage() {
 
   // Load users and projects on mount
   useEffect(() => {
-    // Redirect superadmin to organizations
-    if (currentUser && currentUser.role === 'superadmin') {
+    // Don't load if no user
+    if (!currentUser) return;
+    
+    // Redirect admin to organizations
+    if (currentUser.role === 'admin') {
       router.push('/organizations');
       return;
     }
+    
     const initLoad = async () => {
       await loadData();
     };
@@ -199,9 +201,9 @@ export default function UsersPage() {
 
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                disabled={currentUser?.role !== 'admin'}
+                disabled={currentUser?.role !== 'project-manager'}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-xs font-medium hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title={currentUser?.role !== 'admin' ? 'Only admins can create users' : 'Add new user'}
+                title={currentUser?.role !== 'project-manager' ? 'Only project managers can create users' : 'Add new user'}
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add User
@@ -276,10 +278,10 @@ export default function UsersPage() {
                     className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-xs text-gray-900 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
                   >
                     <option value="all">All Roles</option>
-                    <option value="admin">Admin</option>
+                    <option value="project-manager">Project Manager</option>
                     <option value="qa">QA</option>
                     <option value="developer">Developer</option>
-                    {/* SuperAdmin option hidden from regular users */}
+                    {/* Admin option hidden from regular users */}
                   </select>
                 </div>
 
@@ -386,31 +388,40 @@ export default function UsersPage() {
                         </td>
                         <td className="px-3 py-2.5">
                           <div className="flex items-center justify-end gap-0.5">
-                            <button
-                              onClick={() => toast('Edit user modal coming soon!')}
-                              className="p-1 hover:bg-gray-100 rounded transition-colors"
-                              title="Edit user"
-                            >
-                              <Edit className="w-3 h-3 text-gray-600" />
-                            </button>
-                            <button
-                              onClick={() => handleToggleStatus(user.id)}
-                              className="p-1 hover:bg-gray-100 rounded transition-colors"
-                              title={user.isActive ? 'Deactivate' : 'Activate'}
-                            >
-                              {user.isActive ? (
-                                <UserX className="w-3 h-3 text-orange-600" />
-                              ) : (
-                                <UserCheck className="w-3 h-3 text-green-600" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() => handleDeleteUser(user)}
-                              className="p-1 hover:bg-red-50 rounded transition-colors"
-                              title="Delete user"
-                            >
-                              <Trash2 className="w-3 h-3 text-red-600" />
-                            </button>
+                            {/* Only project-manager can edit/delete/toggle users */}
+                            {currentUser?.role === 'project-manager' && (
+                              <>
+                                <button
+                                  onClick={() => toast('Edit user modal coming soon!')}
+                                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                  title="Edit user"
+                                >
+                                  <Edit className="w-3 h-3 text-gray-600" />
+                                </button>
+                                <button
+                                  onClick={() => handleToggleStatus(user.id)}
+                                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                  title={user.isActive ? 'Deactivate' : 'Activate'}
+                                >
+                                  {user.isActive ? (
+                                    <UserX className="w-3 h-3 text-orange-600" />
+                                  ) : (
+                                    <UserCheck className="w-3 h-3 text-green-600" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(user)}
+                                  className="p-1 hover:bg-red-50 rounded transition-colors"
+                                  title="Delete user"
+                                >
+                                  <Trash2 className="w-3 h-3 text-red-600" />
+                                </button>
+                              </>
+                            )}
+                            {/* QA can only view */}
+                            {currentUser?.role === 'qa' && (
+                              <span className="text-xs text-gray-400">View only</span>
+                            )}
                           </div>
                         </td>
                       </tr>

@@ -111,7 +111,8 @@ export const hasRole = (userRole: string, allowedRoles: string[]): boolean => {
  */
 export const getRoleColor = (role: string): string => {
   const colors: Record<string, string> = {
-    admin: 'bg-purple-100 text-purple-700',
+    admin: 'bg-red-100 text-red-700',  // System admin
+    'project-manager': 'bg-purple-100 text-purple-700',  // Project manager
     developer: 'bg-blue-100 text-blue-700',
     qa: 'bg-green-100 text-green-700',
   };

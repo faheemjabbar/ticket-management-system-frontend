@@ -1,35 +1,133 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema } from '@/schemas/auth';
 import { useAuth } from '@/context/AuthContext';
+import { authAPI } from '@/lib/api';
 import { z } from 'zod';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 type RegisterFormInputs = z.infer<typeof registerSchema>;
 
 const RegisterPage = () => {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { register: registerUser } = useAuth();
+  const [adminExists, setAdminExists] = useState<boolean | null>(null);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const { login } = useAuth();
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterFormInputs>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      role: "developer"
+      role: "admin"
     }
   });
 
+  // Check if admin exists on mount
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const result = await authAPI.checkAdminExists();
+        setAdminExists(result.exists);
+      } catch (error) {
+        console.error('Failed to check admin status:', error);
+        toast.error('Failed to check system status');
+      } finally {
+        setCheckingAdmin(false);
+      }
+    };
+
+    checkAdmin();
+  }, []);
+
   const onSubmit = async (data: RegisterFormInputs) => {
     try {
-      await registerUser(data.name, data.email, data.password, data.role);
+      if (!adminExists) {
+        // Register as admin using the special endpoint
+        const response = await authAPI.registerAdmin({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+        });
+
+        // Store token and login
+        localStorage.setItem('token', response.access_token);
+        
+        // Login with the returned user data
+        await login(data.email, data.password);
+        
+        toast.success('Admin account created successfully!');
+        router.push('/organizations');
+      } else {
+        // This shouldn't happen as the form should be hidden
+        toast.error('Admin already exists. Please login instead.');
+        router.push('/login');
+      }
     } catch (err: any) {
-      // Error already handled by AuthContext and axios interceptor
+      // Error already handled by axios interceptor
+      console.error('Registration error:', err);
     }
   };
+
+  if (checkingAdmin) {
+    return (
+      <div className="min-h-screen bg-[#2C3E50] flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Checking system status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If admin exists, redirect to login
+  if (adminExists) {
+    return (
+      <div className="min-h-screen bg-[#2C3E50] flex flex-col">
+        {/* Header */}
+        <header className="px-8 py-6">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-[#F97316] rounded flex items-center justify-center">
+              <span className="text-white text-sm font-bold">T</span>
+            </div>
+            <span className="text-white text-xl font-bold">
+              Tick<span className="text-[#F97316]">Flo</span>
+            </span>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 flex items-center justify-center px-4 py-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 text-center">
+            <h1 className="text-[#F97316] text-2xl font-bold mb-4">System Already Configured</h1>
+            <p className="text-gray-600 text-sm mb-6">
+              An admin account already exists. Please login to continue.
+            </p>
+            <Link
+              href="/login"
+              className="inline-block w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold py-2.5 rounded transition-all text-sm"
+            >
+              Go to Login
+            </Link>
+          </div>
+        </main>
+
+        {/* Footer */}
+        <footer className="px-8 py-6 flex items-center justify-between">
+          <div className="flex items-center gap-2"></div>
+          <div className="text-gray-400 text-sm">
+            <span>© 2026 TickFlo</span>
+          </div>
+        </footer>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#2C3E50] flex flex-col">
@@ -49,8 +147,16 @@ const RegisterPage = () => {
       <main className="flex-1 flex items-center justify-center px-4 py-4">
         <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
           {/* Title */}
-          <h1 className="text-[#F97316] text-2xl font-bold text-center mb-1">Register</h1>
-          <p className="text-gray-600 text-sm text-center mb-4">Create your TickFlo account</p>
+          <h1 className="text-[#F97316] text-2xl font-bold text-center mb-1">Setup Admin Account</h1>
+          <p className="text-gray-600 text-sm text-center mb-4">Create the first admin account for TickFlo</p>
+
+          {/* Info Banner */}
+          <div className="mb-4 rounded-md border border-blue-300 bg-blue-50 p-3 text-xs text-blue-800">
+            <p className="font-semibold mb-1">ℹ️ First Time Setup</p>
+            <p>
+              You're creating the system administrator account. This account will manage all organizations.
+            </p>
+          </div>
 
           {/* Form */}
           <form className="space-y-3" onSubmit={handleSubmit(onSubmit)}>
@@ -71,25 +177,11 @@ const RegisterPage = () => {
               <label className="block text-sm font-semibold text-gray-900 mb-1">Email</label>
               <input
                 type="email"
-                placeholder="john@example.com"
+                placeholder="admin@example.com"
                 {...register("email")}
                 className="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition-all placeholder:text-gray-400 text-black text-sm"
               />
               {errors.email && <p className="text-red-500 text-[10px] mt-0.5">{errors.email.message}</p>}
-            </div>
-
-            {/* Role Selection */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Role</label>
-              <select
-                {...register("role")}
-                className="w-full px-3 py-2 rounded border border-gray-300 focus:ring-2 focus:ring-[#F97316] focus:border-transparent outline-none transition-all text-black text-sm bg-white"
-              >
-                <option value="developer">Developer</option>
-                <option value="qa">QA</option>
-                <option value="admin">Admin</option>
-              </select>
-              {errors.role && <p className="text-red-500 text-[10px] mt-0.5">{errors.role.message}</p>}
             </div>
 
             {/* Password */}
@@ -140,7 +232,7 @@ const RegisterPage = () => {
               disabled={isSubmitting}
               className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white font-bold py-2.5 rounded transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4 text-sm"
             >
-              {isSubmitting ? "Creating Account..." : "Create Account"}
+              {isSubmitting ? "Creating Admin Account..." : "Create Admin Account"}
             </button>
 
             {/* Login Link */}

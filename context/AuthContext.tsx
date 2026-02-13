@@ -11,7 +11,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, role: string) => Promise<void>;
   logout: () => void;
   updateUser: (updatedUser: Partial<User>) => void;
   isAuthenticated: boolean;
@@ -23,31 +22,27 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Auth provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-
-  // Initialize auth state on mount
-  useEffect(() => {
-    initializeAuth();
-  }, []);
-
-  // Initialize authentication state
-  const initializeAuth = async () => {
+  // Initialize user state directly from localStorage (synchronous)
+  const getInitialUser = (): User | null => {
+    if (typeof window === 'undefined') return null;
+    
     try {
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
-
+      
       if (token && storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
+        return JSON.parse(storedUser);
       }
     } catch (error) {
       // Silent error handling
-    } finally {
-      setLoading(false);
+      console.error('Failed to parse stored user:', error);
     }
+    return null;
   };
+
+  const [user, setUser] = useState<User | null>(getInitialUser());
+  const [loading, setLoading] = useState(false); // No loading needed for localStorage
+  const router = useRouter();
 
   // Login function
   const login = async (email: string, password: string) => {
@@ -71,29 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Redirect to dashboard
       router.push('/dashboard');
-    } catch (error: any) {
-      // Error already handled by axios interceptor
-      throw error;
-    }
-  };
-
-  // Register function
-  const register = async (name: string, email: string, password: string, role: string) => {
-    try {
-      await axiosInstance.post('/auth/register', {
-        name,
-        email,
-        password,
-        role,
-      });
-
-      // Show success message
-      toast.success('Account created successfully!');
-
-      // Redirect to login
-      setTimeout(() => {
-        router.push('/login');
-      }, 1000);
     } catch (error: any) {
       // Error already handled by axios interceptor
       throw error;
@@ -143,7 +115,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     loading,
     login,
-    register,
     logout,
     updateUser,
     isAuthenticated: !!user,

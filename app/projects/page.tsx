@@ -9,6 +9,7 @@ import { projectAPI, ticketAPI, type Project } from '@/lib/api';
 import ProjectModal from '@/components/projects/ProjectModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useAdminRedirect } from '@/hooks/useAdminRedirect';
 import { 
   Search, 
   Plus, 
@@ -37,6 +38,7 @@ interface ProjectWithStats extends Project {
 export default function ProjectsPage() {
   const router = useRouter();
   const { user } = useAuth();
+  useAdminRedirect();
   
   // State
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
@@ -55,11 +57,6 @@ export default function ProjectsPage() {
     const loadProjects = async () => {
       try {
         setLoading(true);
-        // Redirect superadmin to organizations
-        if (user && user.role === 'superadmin') {
-          router.push('/organizations');
-          return;
-        }
         
         // Get all projects
         const projectsResponse = await projectAPI.getAll({ limit: 100 });
@@ -101,7 +98,7 @@ export default function ProjectsPage() {
     };
 
     loadProjects();
-  }, [router, user]);
+  }, []);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -230,13 +227,15 @@ export default function ProjectsPage() {
                 </p>
               </div>
 
-              <button
-                onClick={handleCreateProject}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-xs font-medium hover:bg-orange-700 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                New Project
-              </button>
+              {user?.role === 'project-manager' && (
+                <button
+                  onClick={handleCreateProject}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-xs font-medium hover:bg-orange-700 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  New Project
+                </button>
+              )}
             </div>
 
             {/* Stats */}
@@ -402,26 +401,31 @@ export default function ProjectsPage() {
                       View Details
                     </button>
                     <div className="flex items-center gap-0.5">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditProject(project);
-                        }}
-                        className="p-1 hover:bg-gray-200 rounded transition-colors"
-                        title="Edit project"
-                      >
-                        <Edit className="w-3 h-3 text-gray-600" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteProject(project);
-                        }}
-                        className="p-1 hover:bg-red-50 rounded transition-colors"
-                        title="Delete project"
-                      >
-                        <Trash2 className="w-3 h-3 text-red-600" />
-                      </button>
+                      {/* Only project-manager can edit/delete projects */}
+                      {user?.role === 'project-manager' && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditProject(project);
+                            }}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            title="Edit project"
+                          >
+                            <Edit className="w-3 h-3 text-gray-600" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteProject(project);
+                            }}
+                            className="p-1 hover:bg-red-50 rounded transition-colors"
+                            title="Delete project"
+                          >
+                            <Trash2 className="w-3 h-3 text-red-600" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -439,13 +443,15 @@ export default function ProjectsPage() {
                     : 'Get started by creating your first project in your organization'
                   }
                 </p>
-                <button
-                  onClick={handleCreateProject}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-sm font-medium hover:bg-orange-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create Project
-                </button>
+                {user?.role === 'project-manager' && (
+                  <button
+                    onClick={handleCreateProject}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-sm font-medium hover:bg-orange-700 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create Project
+                  </button>
+                )}
               </div>
             )}
           </div>

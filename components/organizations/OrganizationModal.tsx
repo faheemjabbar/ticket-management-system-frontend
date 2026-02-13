@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { X, Building2, CheckCircle2, User } from 'lucide-react';
 import { organizationAPI, type Organization } from '@/lib/api';
+import { useModalAnimation } from '@/hooks/useModalAnimation';
 
 interface OrganizationModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function OrganizationModal({
   onSuccess 
 }: OrganizationModalProps) {
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const { isAnimating, shouldRender } = useModalAnimation(isOpen);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -28,8 +30,6 @@ export default function OrganizationModal({
     adminPassword: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [shouldRender, setShouldRender] = useState(false);
 
   // Initialize form data when editing
   useEffect(() => {
@@ -52,26 +52,15 @@ export default function OrganizationModal({
     }
   }, [organization]);
 
-  // Handle animation states
+  // Focus input when modal opens
   useEffect(() => {
-    if (isOpen) {
-      setShouldRender(true);
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => setIsAnimating(true), 10);
+    if (isOpen && isAnimating) {
       setTimeout(() => nameInputRef.current?.focus(), 200);
-    } else {
-      setIsAnimating(false);
-      const timer = setTimeout(() => {
-        setShouldRender(false);
-        document.body.style.overflow = 'unset';
-      }, 300);
-      return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, isAnimating]);
 
   const handleClose = () => {
-    setIsAnimating(false);
-    setTimeout(() => onClose(), 300);
+    onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,7 +75,7 @@ export default function OrganizationModal({
     // Additional validation for create mode (admin user required)
     if (!organization) {
       if (!formData.adminName.trim()) {
-        toast.error('Admin name is required');
+        toast.error('Project Manager is required');
         return;
       }
       if (!formData.adminEmail.trim()) {
@@ -113,26 +102,36 @@ export default function OrganizationModal({
           description: formData.description.trim() || undefined,
         });
         toast.success('Organization updated successfully!');
+        handleClose();
+        // Call onSuccess after modal closes
+        setTimeout(() => onSuccess(), 300);
       } else {
         // Create mode - use atomic endpoint
         const result = await organizationAPI.createWithAdmin({
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
-          adminUser: {
+          projectManager: {
             name: formData.adminName.trim(),
             email: formData.adminEmail.trim(),
             password: formData.adminPassword.trim(),
           },
         });
         
+        // Handle different response structures
+        const orgName = result.organization?.name || result.name || formData.name.trim();
+        const pmName = result.admin?.name || result.projectManager?.name || formData.adminName.trim();
+        
         toast.success(
-          `Organization "${result.organization.name}" created with admin "${result.admin.name}"!`
+          `Organization "${orgName}" created with project manager "${pmName}"!`
         );
+        handleClose();
+        // Call onSuccess after modal closes
+        setTimeout(() => onSuccess(), 300);
       }
-      
-      handleClose();
-      onSuccess();
     } catch (error: any) {
+      console.error('Organization creation error:', error);
+      console.error('Error response:', error.response);
+      
       // Handle specific error cases
       if (error.response?.status === 400) {
         const message = error.response.data.message;
@@ -146,6 +145,12 @@ export default function OrganizationModal({
         }
       } else if (error.response?.status === 403) {
         toast.error('You do not have permission to create organizations.');
+      } else if (error.response?.status === 201) {
+        // 201 is success but caught as error - this shouldn't happen
+        console.warn('201 response caught as error - this is unexpected');
+        toast.success('Organization created successfully!');
+        handleClose();
+        setTimeout(() => onSuccess(), 300);
       } else {
         toast.error('Failed to save organization. Please try again.');
       }
@@ -249,14 +254,14 @@ export default function OrganizationModal({
                 <div className="space-y-3.5 pt-3 border-t border-gray-200">
                   <div className="flex items-center gap-2 pb-2">
                     <User className="w-4 h-4 text-orange-600" />
-                    <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide">Admin User</h3>
+                    <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wide">Project Manager User</h3>
                   </div>
-                  <p className="text-[10px] text-gray-600">Create an admin user for this organization</p>
+                  <p className="text-[10px] text-gray-600">Create a PM for this organization</p>
 
-                  {/* Admin Name */}
+                  {/* PM Name */}
                   <div>
                     <label htmlFor="adminName" className="block text-[10px] font-bold text-gray-900 mb-1 uppercase tracking-wide">
-                      Admin Name <span className="text-red-500">*</span>
+                      Project Manager <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -269,10 +274,10 @@ export default function OrganizationModal({
                     />
                   </div>
 
-                  {/* Admin Email */}
+                  {/* PM Email */}
                   <div>
                     <label htmlFor="adminEmail" className="block text-[10px] font-bold text-gray-900 mb-1 uppercase tracking-wide">
-                      Admin Email <span className="text-red-500">*</span>
+                      Email <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="email"
@@ -285,10 +290,10 @@ export default function OrganizationModal({
                     />
                   </div>
 
-                  {/* Admin Password */}
+                  {/* Project Manager Password */}
                   <div>
                     <label htmlFor="adminPassword" className="block text-[10px] font-bold text-gray-900 mb-1 uppercase tracking-wide">
-                      Admin Password <span className="text-red-500">*</span>
+                      Password <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="password"

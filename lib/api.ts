@@ -5,7 +5,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'developer' | 'qa' | 'superadmin';
+  role: 'admin' | 'project-manager' | 'developer' | 'qa';
   organization?: {  // UPDATED - now an object
     id: string;
     name: string;
@@ -21,24 +21,6 @@ export interface User {
   lastLogin?: string;
 }
 
-export interface Activity {
-  id: string;
-  type: string;
-  ticketId: string;
-  ticketTitle: string;
-  userId: string;
-  userName: string;
-  action: string;
-  details: string;
-  targetUserId?: string;
-  targetUserName?: string;
-  oldValue?: string;
-  newValue?: string;
-  timestamp: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface Project {
   id: string;
   name: string;
@@ -52,7 +34,7 @@ export interface Project {
   teamMembers: {
     userId: string;
     userName: string;
-    role: 'admin' | 'qa' | 'developer';  // REMOVED 'superadmin'
+    role: 'project-manager' | 'qa' | 'developer';  // REMOVED 'admin' from team roles
     assignedAt: string;
   }[];
   startDate: string;
@@ -139,7 +121,7 @@ interface PaginatedResponse {
 
 // User API functions
 export const userAPI = {
-  // Get all users (Admin only)
+  // Get all users (Project Manager only)
   getAll: async (params?: {
     role?: string;
     isActive?: boolean;
@@ -151,13 +133,13 @@ export const userAPI = {
     return response.data;
   },
 
-  // Create user (Admin/Superadmin only)
+  // Create user (Project Manager/Admin only)
   create: async (data: {
     name: string;
     email: string;
     password: string;
-    role: 'admin' | 'developer' | 'qa';
-    organizationId: string;  // Required - admin's organization ID
+    role: 'project-manager' | 'developer' | 'qa';
+    organizationId: string;  // Required - project manager's organization ID
     bio?: string;
   }): Promise<User> => {
     const response = await axiosInstance.post('/api/users', data);
@@ -176,13 +158,13 @@ export const userAPI = {
     return response.data;
   },
 
-  // Toggle user status (Admin only)
+  // Toggle user status (Project Manager only)
   toggleStatus: async (id: string): Promise<{ id: string; name: string; isActive: boolean }> => {
     const response = await axiosInstance.patch(`/api/users/${id}/toggle-status`);
     return response.data;
   },
 
-  // Delete user (Admin only)
+  // Delete user (Project Manager only)
   delete: async (id: string): Promise<{ message: string }> => {
     const response = await axiosInstance.delete(`/api/users/${id}`);
     return response.data;
@@ -229,7 +211,7 @@ export const projectAPI = {
     return response.data;
   },
 
-  // Create project (Admin/QA only)
+  // Create project (Project Manager/QA only)
   create: async (data: {
     name: string;
     description: string;
@@ -242,13 +224,13 @@ export const projectAPI = {
     return response.data;
   },
 
-  // Update project (Admin/QA only)
+  // Update project (Project Manager/QA only)
   update: async (id: string, data: Partial<Project>): Promise<Project> => {
     const response = await axiosInstance.put(`/api/projects/${id}`, data);
     return response.data;
   },
 
-  // Delete project (Admin only)
+  // Delete project (Project Manager only)
   delete: async (id: string): Promise<{ message: string }> => {
     const response = await axiosInstance.delete(`/api/projects/${id}`);
     return response.data;
@@ -277,7 +259,7 @@ export const ticketAPI = {
     return response.data;
   },
 
-  // Create ticket (Admin/QA only)
+  // Create ticket (Project Manager/QA only)
   create: async (data: {
     title: string;
     description: string;
@@ -357,23 +339,6 @@ export const historyAPI = {
   },
 };
 
-// Activities API functions
-export const activitiesAPI = {
-  // Get recent activities
-  getAll: async (params?: {
-    limit?: number;
-    offset?: number;
-    userId?: string;
-  }): Promise<{
-    activities: Activity[];
-    total: number;
-    hasMore: boolean;
-  }> => {
-    const response = await axiosInstance.get('/api/activities', { params });
-    return response.data;
-  },
-};
-
 // Auth API functions (already implemented in AuthContext, but adding for completeness)
 export const authAPI = {
   // Login
@@ -382,14 +347,19 @@ export const authAPI = {
     return response.data;
   },
 
-  // Register
-  register: async (data: {
+  // Register Admin (public endpoint - no auth required)
+  registerAdmin: async (data: {
     name: string;
     email: string;
     password: string;
-    role: string;
   }) => {
-    const response = await axiosInstance.post('/auth/register', data);
+    const response = await axiosInstance.post('/auth/register-admin', data);
+    return response.data;
+  },
+
+  // Check if admin exists (public endpoint)
+  checkAdminExists: async (): Promise<{ exists: boolean }> => {
+    const response = await axiosInstance.get('/auth/admin-exists');
     return response.data;
   },
 
@@ -436,7 +406,7 @@ export const uploadAPI = {
   },
 };
 
-// Organization API functions (Superadmin only)
+// Organization API functions (Admin only)
 export const organizationAPI = {
   // Get all organizations
   getAll: async (): Promise<Organization[]> => {
@@ -450,19 +420,16 @@ export const organizationAPI = {
     return response.data;
   },
 
-  // Create organization with admin user (atomic transaction)
+  // Create organization with project manager (atomic transaction)
   createWithAdmin: async (data: {
     name: string;
     description?: string;
-    adminUser: {
+    projectManager: {
       name: string;
       email: string;
       password: string;
     };
-  }): Promise<{
-    organization: Organization;
-    admin: User;
-  }> => {
+  }): Promise<any> => {
     const response = await axiosInstance.post('/api/organizations/with-admin', data);
     return response.data;
   },

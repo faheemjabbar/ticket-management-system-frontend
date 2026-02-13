@@ -7,8 +7,8 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import { Search, ChevronDown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { useNotifications } from '@/context/NotificationContext';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useAdminRedirect } from '@/hooks/useAdminRedirect';
 import {
   DndContext,
   DragOverlay,
@@ -87,14 +87,14 @@ function SortableTicketCard({ ticket, onClick, onSelfAssign, isDeveloper, isPend
     >
       {/* Ticket Title */}
       <div className="flex items-start justify-between mb-1.5">
-        <h4 className="text-[10px] font-medium text-gray-900 line-clamp-2 flex-1 leading-tight">
+        <h4 className="text-xs font-semibold text-gray-900 line-clamp-2 flex-1 leading-tight">
           {ticket.title}
         </h4>
         <span className="text-[9px] text-gray-500 ml-1.5">#{ticket.id}</span>
       </div>
 
       {/* Ticket Meta */}
-      <div className="text-[9px] text-gray-500 mb-2">
+      <div className="text-[12px] text-gray-500 pt-2">
         <span className="font-medium">{ticket.author}</span>
         <span className="mx-1">•</span>
         <span>{ticket.time}</span>
@@ -176,8 +176,8 @@ function convertToDashboardTicket(apiTicket: APITicket): DashboardTicket {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { socket } = useNotifications();
   const router = useRouter();
+  useAdminRedirect();
   
   // State
   const [tickets, setTickets] = useState<DashboardTicket[]>([]);
@@ -205,11 +205,6 @@ export default function DashboardPage() {
     const loadData = async () => {
       // Don't load if no user (logged out)
       if (!user) return;
-      // Superadmin should not access dashboard tickets/projects — redirect to organizations
-      if (user.role === 'superadmin') {
-        router.push('/organizations');
-        return;
-      }
       
       try {
         setLoading(true);
@@ -219,8 +214,8 @@ export default function DashboardPage() {
         const dashboardTickets = ticketsResponse.tickets.map(convertToDashboardTicket);
         setTickets(dashboardTickets);
 
-        // Load projects only for QA and Admin
-        if (user && (user.role === 'qa' || user.role === 'admin')) {
+        // Load projects only for QA and Project Manager
+        if (user && (user.role === 'qa' || user.role === 'project-manager')) {
           const projectsResponse = await projectAPI.getAll({ limit: 100 });
           const projectsWithAll = [
             { 
@@ -253,43 +248,6 @@ export default function DashboardPage() {
     loadData();
   }, [user]);
 
-  // Listen for real-time ticket updates via WebSocket
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleTicketUpdate = (update: any) => {
-      console.log('Ticket update received:', update);
-      
-      // Reload tickets to get latest data
-      const reloadTickets = async () => {
-        try {
-          const ticketsResponse = await ticketAPI.getAll({ limit: 100 });
-          const dashboardTickets = ticketsResponse.tickets.map(convertToDashboardTicket);
-          setTickets(dashboardTickets);
-        } catch (error) {
-          console.error('Failed to reload tickets:', error);
-        }
-      };
-
-      reloadTickets();
-    };
-
-    // Listen for general ticket updates
-    socket.on('ticket:update', handleTicketUpdate);
-
-    // Also listen for custom window events
-    const handleCustomUpdate = () => {
-      handleTicketUpdate({});
-    };
-    
-    window.addEventListener('ticket-updated', handleCustomUpdate);
-
-    return () => {
-      socket.off('ticket:update', handleTicketUpdate);
-      window.removeEventListener('ticket-updated', handleCustomUpdate);
-    };
-  }, [socket]);
-
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -313,7 +271,6 @@ export default function DashboardPage() {
     
     if (!over) {
       // Ticket was dropped outside any droppable area - do nothing
-      console.log('Dropped outside droppable area');
       return;
     }
 
@@ -323,7 +280,6 @@ export default function DashboardPage() {
     // Validate that overColumn is a valid status
     const validStatuses = ['pending', 'assigned', 'awaiting', 'closed'];
     if (!validStatuses.includes(overColumn)) {
-      console.log('Invalid drop target:', overColumn);
       return;
     }
 
@@ -449,23 +405,6 @@ export default function DashboardPage() {
 
   const activeTicket = activeId ? tickets.find(t => t.id === activeId) : null;
 
-  // Calculate developer stats (only for developers)
-  const developerStats = useMemo(() => {
-    if (user?.role !== 'developer') return null;
-
-    const pending = ticketsByStatus.pending?.length || 0;
-    const inProgress = ticketsByStatus.assigned?.length || 0;
-    const completed = ticketsByStatus.closed?.length || 0;
-    const reopened = 0; // You can add this status if needed
-
-    return [
-      { name: 'Pending', value: pending, color: '#FB923C' },
-      { name: 'In Progress', value: inProgress, color: '#F97316' },
-      { name: 'Completed', value: completed, color: '#34D399' },
-      { name: 'Reopened', value: reopened, color: '#60A5FA' },
-    ];
-  }, [ticketsByStatus, user]);
-
   if (loading) {
     return (
       <ProtectedRoute>
@@ -478,11 +417,7 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <DashboardLayout 
-        showActivityPanel={true}
-        userRole={user?.role}
-        activityStats={developerStats}
-      >
+      <DashboardLayout>
         <div className="space-y-3">
           {/* Organization Context Header */}
           {user && (
@@ -490,7 +425,7 @@ export default function DashboardPage() {
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">Ticket Dashboard</h1>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {user.role === 'superadmin' 
+                  {user.role === 'admin' 
                     ? 'Viewing all organizations' 
                     : user.organization 
                       ? `Organization: ${user.organization.name}`
@@ -626,7 +561,7 @@ export default function DashboardPage() {
               {activeTicket ? (
                 <div className="bg-white p-2.5 rounded-lg border-2 border-orange-500 shadow-xl opacity-90">
                   <div className="flex items-start justify-between mb-1.5">
-                    <h4 className="text-xs font-medium text-gray-900 line-clamp-2 flex-1 leading-tight">
+                    <h4 className="text-sm font-bold text-gray-900 line-clamp-2 flex-1 leading-tight">
                       {activeTicket.title}
                     </h4>
                     <span className="text-[10px] text-gray-500 ml-1.5">

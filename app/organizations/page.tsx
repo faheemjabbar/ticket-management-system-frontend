@@ -32,17 +32,17 @@ export default function OrganizationsPage() {
   const [orgToDelete, setOrgToDelete] = useState<Organization | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Redirect if not superadmin
+  // Redirect if not admin
   useEffect(() => {
-    if (user && user.role !== 'superadmin') {
-      toast.error('Access denied. Superadmin only.');
+    if (user && user.role !== 'admin') {
+      toast.error('Access denied. Admin only.');
       router.push('/dashboard');
     }
   }, [user, router]);
 
   // Load organizations
   useEffect(() => {
-    if (user?.role === 'superadmin') {
+    if (user?.role === 'admin') {
       loadOrganizations();
     }
   }, [user]);
@@ -96,7 +96,7 @@ export default function OrganizationsPage() {
     org.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (user?.role !== 'superadmin') {
+  if (user?.role !== 'admin') {
     return null;
   }
 

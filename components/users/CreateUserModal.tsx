@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { X, User, CheckCircle2, Mail, Lock, Briefcase, FileText } from 'lucide-react';
 import { userAPI } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { useModalAnimation } from '@/hooks/useModalAnimation';
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function CreateUserModal({
 }: CreateUserModalProps) {
   const { user: currentUser } = useAuth();
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const { isAnimating, shouldRender } = useModalAnimation(isOpen);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -29,8 +31,6 @@ export default function CreateUserModal({
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [shouldRender, setShouldRender] = useState(false);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -45,26 +45,15 @@ export default function CreateUserModal({
     }
   }, [isOpen]);
 
-  // Handle animation states
+  // Focus input when modal opens
   useEffect(() => {
-    if (isOpen) {
-      setShouldRender(true);
-      document.body.style.overflow = 'hidden';
-      setTimeout(() => setIsAnimating(true), 10);
+    if (isOpen && isAnimating) {
       setTimeout(() => nameInputRef.current?.focus(), 200);
-    } else {
-      setIsAnimating(false);
-      const timer = setTimeout(() => {
-        setShouldRender(false);
-        document.body.style.overflow = 'unset';
-      }, 300);
-      return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, isAnimating]);
 
   const handleClose = () => {
-    setIsAnimating(false);
-    setTimeout(() => onClose(), 300);
+    onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,15 +84,15 @@ export default function CreateUserModal({
     setIsSubmitting(true);
 
     try {
-      // Validate that admin has organizationId
+      // Validate that project manager has organizationId
       if (!currentUser?.organization?.id) {
         toast.error('Unable to create user: Organization information missing');
         setIsSubmitting(false);
         return;
       }
 
-      // Admin creates users - include organizationId from current user
-      const createdUser = await userAPI.create({
+      // Project Manager creates users - include organizationId from current user
+      await userAPI.create({
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         password: formData.password.trim(),
@@ -112,13 +101,10 @@ export default function CreateUserModal({
         bio: formData.bio.trim() || undefined,
       });
       
-      console.log('User created successfully:', createdUser);
       toast.success(`User "${formData.name}" created successfully!`);
       
-      // Wait for the list to reload before closing modal
-      console.log('Calling onSuccess to reload users...');
-      await onSuccess();
-      console.log('Users reloaded, closing modal...');
+      // Reload the list
+      onSuccess();
       handleClose();
     } catch (error: any) {
       // Handle specific error cases
@@ -142,8 +128,8 @@ export default function CreateUserModal({
     }
   };
 
-  // Only admins can create users
-  if (currentUser?.role !== 'admin') {
+  // Only project managers can create users
+  if (currentUser?.role !== 'project-manager') {
     return null;
   }
 
@@ -281,7 +267,7 @@ export default function CreateUserModal({
                     <option value="qa">QA</option>
                   </select>
                 </div>
-                <p className="text-[9px] text-gray-500 mt-1">Admin can only create Developer or QA roles</p>
+                <p className="text-[9px] text-gray-500 mt-1">Project Manager can only create Developer or QA roles</p>
               </div>
 
               {/* Bio (Optional) */}

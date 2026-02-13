@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import TicketForm from '@/components/tickets/TicketForm';
@@ -10,18 +9,13 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { ticketAPI, type Ticket } from '@/lib/api';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useAdminRedirect } from '@/hooks/useAdminRedirect';
 
 export default function EditTicketPage() {
   const params = useParams();
   const router = useRouter();
   const ticketId = params.id as string;
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (user && user.role === 'superadmin') {
-      router.push('/organizations');
-    }
-  }, [user, router]);
+  useAdminRedirect();
   
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);

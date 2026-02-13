@@ -27,7 +27,7 @@ export default function TicketForm({ mode, initialData, ticketId }: TicketFormPr
   
   // State
   const [projects, setProjects] = useState<Project[]>([]);
-  const [developers, setDevelopers] = useState<User[]>([]);
+  const [teamMembers, setTeamMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [formData, setFormData] = useState({
@@ -43,30 +43,59 @@ export default function TicketForm({ mode, initialData, ticketId }: TicketFormPr
   const [newLabel, setNewLabel] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load projects and developers
+  // Load projects
   useEffect(() => {
-    const loadData = async () => {
+    const loadProjects = async () => {
       try {
         setLoading(true);
-        
-        // Load projects and developers in parallel
-        const [projectsResponse, usersResponse] = await Promise.all([
-          projectAPI.getAll({ limit: 100 }),
-          userAPI.getAll({ role: 'developer', limit: 100 })
-        ]);
-
+        const projectsResponse = await projectAPI.getAll({ limit: 100 });
         setProjects(projectsResponse.projects);
-        setDevelopers(usersResponse.users);
-        
       } catch {
-        toast.error('Failed to load form data');
+        toast.error('Failed to load projects');
       } finally {
         setLoading(false);
       }
     };
 
-    loadData();
+    loadProjects();
   }, []);
+
+  // Load team members when project is selected
+  useEffect(() => {
+    const loadTeamMembers = async () => {
+      if (!formData.projectId) {
+        setTeamMembers([]);
+        return;
+      }
+
+      try {
+        const project = projects.find(p => p.id === formData.projectId);
+        if (!project) return;
+
+        // Get all users in the organization
+        const usersResponse = await userAPI.getAll({ limit: 100 });
+        
+        // Filter to only team members (developers and QA) who are in this project
+        const projectTeamMemberIds = project.teamMembers.map(tm => tm.userId);
+        const availableAssignees = usersResponse.users.filter(user => 
+          projectTeamMemberIds.includes(user.id) && 
+          (user.role === 'developer' || user.role === 'qa') &&
+          user.isActive
+        );
+        
+        setTeamMembers(availableAssignees);
+        
+        // Clear assignee if they're not in the new project's team
+        if (formData.assignedToId && !availableAssignees.find(u => u.id === formData.assignedToId)) {
+          setFormData(prev => ({ ...prev, assignedToId: '' }));
+        }
+      } catch {
+        toast.error('Failed to load team members');
+      }
+    };
+
+    loadTeamMembers();
+  }, [formData.projectId, projects]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,12 +131,21 @@ export default function TicketForm({ mode, initialData, ticketId }: TicketFormPr
         
         // If assigned to someone, assign the ticket
         if (formData.assignedToId) {
-          const assignedUser = developers.find(d => d.id === formData.assignedToId);
+          const assignedUser = teamMembers.find(d => d.id === formData.assignedToId);
           if (assignedUser) {
-            await ticketAPI.assign(newTicket.id, {
-              assignedToId: assignedUser.id,
-              assignedToName: assignedUser.name,
-            });
+            try {
+              await ticketAPI.assign(newTicket.id, {
+                assignedToId: assignedUser.id,
+                assignedToName: assignedUser.name,
+              });
+            } catch (error: any) {
+              // Handle assignment validation errors
+              if (error.response?.status === 400) {
+                toast.error(error.response.data.message || 'Failed to assign ticket');
+              } else {
+                throw error;
+              }
+            }
           }
         }
         
@@ -126,12 +164,21 @@ export default function TicketForm({ mode, initialData, ticketId }: TicketFormPr
         
         // Handle assignment change
         if (formData.assignedToId) {
-          const assignedUser = developers.find(d => d.id === formData.assignedToId);
+          const assignedUser = teamMembers.find(d => d.id === formData.assignedToId);
           if (assignedUser) {
-            await ticketAPI.assign(ticketId, {
-              assignedToId: assignedUser.id,
-              assignedToName: assignedUser.name,
-            });
+            try {
+              await ticketAPI.assign(ticketId, {
+                assignedToId: assignedUser.id,
+                assignedToName: assignedUser.name,
+              });
+            } catch (error: any) {
+              // Handle assignment validation errors
+              if (error.response?.status === 400) {
+                toast.error(error.response.data.message || 'Failed to assign ticket');
+              } else {
+                throw error;
+              }
+            }
           }
         }
         
@@ -265,15 +312,23 @@ export default function TicketForm({ mode, initialData, ticketId }: TicketFormPr
             id="assignedTo"
             value={formData.assignedToId}
             onChange={(e) => setFormData(prev => ({ ...prev, assignedToId: e.target.value }))}
-            className="w-full px-3 py-2 border text-gray-900 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+            disabled={!formData.projectId}
+            className="w-full px-3 py-2 border text-gray-900 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
-            <option value="">Unassigned</option>
-            {developers.map(dev => (
-              <option key={dev.id} value={dev.id}>
-                {dev.name}
+            <option value="">
+              {!formData.projectId ? 'Select a project first' : 'Unassigned'}
+            </option>
+            {teamMembers.map(member => (
+              <option key={member.id} value={member.id}>
+                {member.name} ({member.role.toUpperCase()})
               </option>
             ))}
           </select>
+          {formData.projectId && teamMembers.length === 0 && (
+            <p className="text-xs text-gray-500 mt-1">
+              No team members available for this project
+            </p>
+          )}
         </div>
 
         {/* Deadline */}

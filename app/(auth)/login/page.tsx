@@ -45,6 +45,7 @@ const LoginPage = () => {
           <h1 className="text-[#F97316] text-2xl font-bold text-center mb-1">Login</h1>
           <p className="text-gray-600 text-sm text-center mb-4">Welcome back to TickFlo</p>
 
+
           {/* Form */}
           <form className="space-y-3" onSubmit={handleSubmit(onSubmit)}>
             {/* Email */}
