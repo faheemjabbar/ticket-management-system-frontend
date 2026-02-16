@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -29,6 +29,12 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
   const router = useRouter();
   const pathname = usePathname();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navigation = [
     {
@@ -80,6 +86,11 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
   const filteredStaffNav = staffNavigation.filter(item => 
     user && hasRole(item.roles)
   );
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <>
