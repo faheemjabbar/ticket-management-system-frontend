@@ -438,6 +438,7 @@ export const organizationAPI = {
   update: async (id: string, data: {
     name?: string;
     description?: string;
+    isActive?: boolean;
   }): Promise<Organization> => {
     const response = await axiosInstance.put(`/api/organizations/${id}`, data);
     return response.data;
