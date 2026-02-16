@@ -75,11 +75,11 @@ export default function EditTicketPage() {
             {/* Header */}
             <div className="mb-6">
               <button
-                onClick={() => router.push(`/tickets/${ticketId}`)}
+                onClick={() => router.push('/tickets')}
                 className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Back to Ticket</span>
+                <span className="text-sm font-medium">Back to Tickets</span>
               </button>
               
               <div className="flex items-center justify-between">

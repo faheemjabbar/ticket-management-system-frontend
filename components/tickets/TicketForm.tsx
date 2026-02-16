@@ -183,7 +183,7 @@ export default function TicketForm({ mode, initialData, ticketId }: TicketFormPr
         }
         
         toast.success('Ticket updated successfully!');
-        router.push(`/tickets/${ticketId}`);
+        router.push('/tickets');
       }
     } catch {
       toast.error('Failed to save ticket. Please try again.');
@@ -210,8 +210,8 @@ export default function TicketForm({ mode, initialData, ticketId }: TicketFormPr
   };
 
   const handleCancel = () => {
-    if (mode === 'edit' && ticketId) {
-      router.push(`/tickets/${ticketId}`);
+    if (mode === 'edit') {
+      router.push('/tickets');
     } else {
       router.push('/dashboard');
     }
