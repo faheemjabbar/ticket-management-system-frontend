@@ -196,7 +196,8 @@ export default function OrganizationsPage() {
             {filteredOrgs.map((org) => (
               <div
                 key={org.id}
-                className="bg-white rounded border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                className="bg-white rounded border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => router.push(`/organizations/${org.id}`)}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -222,14 +223,20 @@ export default function OrganizationsPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={() => handleEditOrg(org)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditOrg(org);
+                      }}
                       className="p-1 hover:bg-gray-100 rounded transition-colors"
                       title="Edit organization"
                     >
                       <Edit className="w-3 h-3 text-gray-600" />
                     </button>
                     <button
-                      onClick={() => handleDeleteOrg(org)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteOrg(org);
+                      }}
                       className="p-1 hover:bg-red-50 rounded transition-colors"
                       title="Delete organization"
                     >
