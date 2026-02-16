@@ -54,6 +54,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const { access_token: token, user } = res.data;
 
+      // Check if user's organization is inactive (only for non-admin users)
+      if (user.role !== 'admin' && user.organization && !user.organization.isActive) {
+        toast.error('Your organization has been deactivated. Please contact support.');
+        return;
+      }
+
       // Store token and user in localStorage (now includes organizationId)
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));

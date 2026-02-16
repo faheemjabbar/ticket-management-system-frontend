@@ -8,6 +8,7 @@ export enum UserRole {
 export interface Organization {
   id: string;
   name: string;
+  isActive?: boolean;
 }
 
 export interface User {

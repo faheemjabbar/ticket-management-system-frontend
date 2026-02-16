@@ -73,8 +73,18 @@ axiosInstance.interceptors.response.use(
           break;
           
         case 403:
-          // Forbidden - user doesn't have permission
-          toast.error('You do not have permission to perform this action');
+          // Forbidden - check if it's organization deactivation
+          const errorMessage = data?.message || '';
+          
+          if (errorMessage.toLowerCase().includes('organization') && 
+              errorMessage.toLowerCase().includes('deactivated')) {
+            // Organization deactivated - clear session and redirect
+            toast.error('Your organization has been deactivated. Please contact support.');
+            window.location.href = '/login';
+          } else {
+            // Other permission errors
+            toast.error(data?.message || 'You do not have permission to perform this action');
+          }
           break;
           
         case 404:
