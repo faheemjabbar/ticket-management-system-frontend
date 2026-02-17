@@ -174,24 +174,24 @@ const LoginPage = () => {
                   {/* Dropdown */}
                   <div className="absolute top-full mt-2 w-full bg-white border-2 border-slate-200 rounded-xl shadow-xl z-20 overflow-hidden">
                     {demoAccounts.map((account, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => fillDemoCredentials(account.email, account.password)}
-                        className="w-full px-4 py-3 text-left hover:bg-orange-50 transition-colors border-b border-slate-100 last:border-b-0 group"
-                      >
-                        <div className="flex items-center gap-3">
-                          
-                          <div className="flex-1">
-                            <div className="text-sm font-bold text-slate-900 group-hover:text-orange-600 transition-colors">
-                              {account.role}
-                            </div>
-                            <div className="text-[10px] text-slate-500 mt-0.5">
-                              {account.email}
-                            </div>
-                          </div>
-                        </div>
-                      </button>
+<button
+  key={index}
+  type="button"
+  onClick={() => fillDemoCredentials(account.email, account.password)}
+  className="w-full px-4 py-2 text-left hover:bg-orange-50 transition-colors border-b border-slate-100 last:border-b-0 group"
+>
+  <div className="flex items-center gap-2">
+    <div className="flex-1">
+      <div className="text-xs font-bold text-slate-900 group-hover:text-orange-600 transition-colors">
+        {account.role}
+      </div>
+      <div className="text-[10px] text-slate-500 mt-0.25">
+        {account.email}
+      </div>
+    </div>
+  </div>
+</button>
+
                     ))}
                   </div>
                 </>
