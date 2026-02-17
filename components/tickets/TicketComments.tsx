@@ -171,7 +171,7 @@ export default function TicketComments({ ticketId }: TicketCommentsProps) {
                 {/* Avatar */}
                 <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-orange-600 font-semibold text-xs">
-                    {(comment.authorName || comment.author).charAt(0).toUpperCase()}
+                    {comment.authorName.charAt(0).toUpperCase()}
                   </span>
                 </div>
 
@@ -179,7 +179,7 @@ export default function TicketComments({ ticketId }: TicketCommentsProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-semibold text-gray-900">
-                      {comment.authorName || comment.author}
+                      {comment.authorName}
                     </span>
                     <span className="text-[10px] text-gray-500">
                       {formatDate(comment.createdAt)}
