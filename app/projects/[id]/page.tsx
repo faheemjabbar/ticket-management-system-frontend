@@ -316,8 +316,7 @@ export default function ProjectDetailPage() {
                       projectTickets.map((ticket) => (
                         <div
                           key={ticket.id}
-                          onClick={() => router.push(`/tickets/${ticket.id}`)}
-                          className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all cursor-pointer"
+                          className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">

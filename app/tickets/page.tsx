@@ -10,7 +10,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import StatusBadge from '@/components/ui/StatusBadge';
 import PriorityBadge from '@/components/ui/PriorityBadge';
 import EmptyState from '@/components/common/EmptyState';
-import { Search, Plus, Filter, Eye, Ticket } from 'lucide-react';
+import { Search, Plus, Filter, Edit, Ticket } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const TicketsPage = () => {
@@ -42,9 +42,6 @@ const TicketsPage = () => {
     });
   }, [tickets, searchQuery, statusFilter, priorityFilter]);
 
-  const handleCreateTicket = () => {
-    router.push('/tickets/create');
-  };
 
   const handleViewTicket = (ticketId: string) => {
     router.push(`/tickets/${ticketId}/edit`);
@@ -72,15 +69,6 @@ const TicketsPage = () => {
                 Manage and track all tickets across projects
               </p>
             </div>
-            {(user?.role === 'project-manager' || user?.role === 'qa') && (
-              <button
-                onClick={handleCreateTicket}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-xs font-medium hover:bg-orange-700 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                New Ticket
-              </button>
-            )}
           </div>
                     {/* Summary Stats */}
           {tickets.length > 0 && (
@@ -118,7 +106,7 @@ const TicketsPage = () => {
                     </div>
                   </div>
                   <div className="w-9 h-9 bg-blue-50 rounded flex items-center justify-center">
-                    <Eye className="w-4 h-4 text-blue-600" />
+                    <Edit className="w-4 h-4 text-blue-600" />
                   </div>
                 </div>
               </div>
@@ -214,11 +202,7 @@ const TicketsPage = () => {
                   ? "Try adjusting your filters or search query"
                   : "Create your first ticket to get started"
               }
-              action={(user?.role === 'project-manager' || user?.role === 'qa') ? {
-                label: "Create Ticket",
-                onClick: handleCreateTicket,
-                icon: Plus
-              } : undefined}
+
             />
           ) : (
             <div className="bg-white rounded border border-gray-200 overflow-hidden">
@@ -286,8 +270,8 @@ const TicketsPage = () => {
                             onClick={() => handleViewTicket(ticket.id)}
                             className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-orange-600 hover:bg-orange-50 rounded transition-colors"
                           >
-                            <Eye className="w-3 h-3" />
-                            View
+                            <Edit className="w-3 h-3" />
+                            Edit
                           </button>
                         </td>
                       </tr>

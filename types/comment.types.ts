@@ -5,8 +5,10 @@ export interface Comment {
   ticketId: string;
   author: string;
   authorId: string;
+  authorName: string;
   content: string;
   createdAt: string;
+  updatedAt: string;
   attachments?: {
     id: string;
     name: string;

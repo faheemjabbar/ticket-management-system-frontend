@@ -29,6 +29,7 @@ import {
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ticketAPI, projectAPI, type Ticket as APITicket, type Project } from '@/lib/api';
+import TicketDetailModal from '@/components/tickets/TicketDetailModal';
 
 // Dashboard ticket interface (simplified from API ticket)
 interface DashboardTicket {
@@ -54,9 +55,10 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
 }
 
 // Sortable Ticket Card Component
-function SortableTicketCard({ ticket, onClick, onSelfAssign, isDeveloper, isPending }: {
+function SortableTicketCard({ ticket, onClick, onCommentClick, onSelfAssign, isDeveloper, isPending }: {
   ticket: DashboardTicket;
   onClick: () => void;
+  onCommentClick: () => void;
   onSelfAssign: (ticketId: string) => void;
   isDeveloper: boolean;
   isPending: boolean;
@@ -126,8 +128,12 @@ function SortableTicketCard({ ticket, onClick, onSelfAssign, isDeveloper, isPend
           </button>
         ) : (
           <button 
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCommentClick();
+            }}
             className="text-gray-400 hover:text-gray-600"
+            title="View details and comments"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -184,6 +190,8 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<(Project & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // State to track visible ticket count per column
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({
@@ -400,7 +408,20 @@ export default function DashboardPage() {
   
   // Handle ticket click
   const handleTicketClick = (ticketId: string) => {
-    router.push(`/tickets/${ticketId}`);
+    setSelectedTicketId(ticketId);
+    setIsModalOpen(true);
+  };
+
+  // Handle comment icon click
+  const handleCommentClick = (ticketId: string) => {
+    setSelectedTicketId(ticketId);
+    setIsModalOpen(true);
+  };
+
+  // Close modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedTicketId(null);
   };
 
   const activeTicket = activeId ? tickets.find(t => t.id === activeId) : null;
@@ -534,6 +555,7 @@ export default function DashboardPage() {
                             key={ticket.id}
                             ticket={ticket}
                             onClick={() => handleTicketClick(ticket.id)}
+                            onCommentClick={() => handleCommentClick(ticket.id)}
                             onSelfAssign={handleSelfAssign}
                             isDeveloper={user?.role === 'developer'}
                             isPending={column.id === 'pending'}
@@ -585,6 +607,15 @@ export default function DashboardPage() {
               ) : null}
             </DragOverlay>
           </DndContext>
+
+          {/* Ticket Detail Modal */}
+          {selectedTicketId && (
+            <TicketDetailModal
+              ticketId={selectedTicketId}
+              isOpen={isModalOpen}
+              onClose={closeModal}
+            />
+          )}
         </div>
       </DashboardLayout>
     </ProtectedRoute>

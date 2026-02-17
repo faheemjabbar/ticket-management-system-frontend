@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import TicketForm from '@/components/tickets/TicketForm';
+import TicketComments from '@/components/tickets/TicketComments';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { ticketAPI, type Ticket } from '@/lib/api';
 import { ArrowLeft } from 'lucide-react';
@@ -71,7 +72,7 @@ export default function EditTicketPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto space-y-5">
             {/* Header */}
             <div className="mb-6">
               <button
@@ -108,6 +109,9 @@ export default function EditTicketPage() {
                 }}
               />
             </div>
+
+            {/* Comments Section */}
+            <TicketComments ticketId={ticketId} />
           </div>
         </DashboardLayout>
     </ProtectedRoute>
