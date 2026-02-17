@@ -22,6 +22,7 @@ const DottedBackground = ({ opacity = "opacity-[0.1]", size = "150px" }) => (
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showDemoDropdown, setShowDemoDropdown] = useState(false);
   const { login } = useAuth();
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue } = useForm<LoginFormInputs>({
@@ -36,10 +37,19 @@ const LoginPage = () => {
     }
   };
 
+  // Demo credentials for different roles
+  const demoAccounts = [
+    { role: 'Admin', email: 'admin@mail.com', password: '123456'},
+    { role: 'Project Manager', email: 'pm@mail.com', password: '123456'},
+    { role: 'QA', email: 'qa@mail.com', password: '123456'},
+    { role: 'Developer', email: 'dev@mail.com', password: '123456'},
+  ];
+
   // Fill demo credentials
-  const fillDemoCredentials = () => {
-    setValue('email', 'admin@mail.com');
-    setValue('password', '123456');
+  const fillDemoCredentials = (email: string, password: string) => {
+    setValue('email', email);
+    setValue('password', password);
+    setShowDemoDropdown(false);
   };
 
   return (
@@ -141,18 +151,52 @@ const LoginPage = () => {
               </label>
             </div>
 
-            {/* Demo Credentials Button */}
-            <button
-              type="button"
-              onClick={fillDemoCredentials}
-              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl transition-all border-2 border-slate-200 hover:border-slate-300 flex items-center justify-center gap-2 text-sm mt-4"
-            >
-              <Sparkles size={16} className="text-orange-500" />
-              Use Demo Credentials
-            </button>
-            <p className="text-center text-[10px] text-slate-400 mt-1">
-              Email: admin@mail.com • Password: 123456
-            </p>
+            {/* Demo Credentials Dropdown */}
+            <div className="relative mt-4">
+              <button
+                type="button"
+                onClick={() => setShowDemoDropdown(!showDemoDropdown)}
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl transition-all border-2 border-slate-200 hover:border-slate-300 flex items-center justify-center gap-2 text-sm"
+              >
+                <Sparkles size={16} className="text-orange-500" />
+                Use Demo Credentials
+              </button>
+
+              {/* Dropdown Menu */}
+              {showDemoDropdown && (
+                <>
+                  {/* Backdrop */}
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setShowDemoDropdown(false)}
+                  />
+                  
+                  {/* Dropdown */}
+                  <div className="absolute top-full mt-2 w-full bg-white border-2 border-slate-200 rounded-xl shadow-xl z-20 overflow-hidden">
+                    {demoAccounts.map((account, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => fillDemoCredentials(account.email, account.password)}
+                        className="w-full px-4 py-3 text-left hover:bg-orange-50 transition-colors border-b border-slate-100 last:border-b-0 group"
+                      >
+                        <div className="flex items-center gap-3">
+                          
+                          <div className="flex-1">
+                            <div className="text-sm font-bold text-slate-900 group-hover:text-orange-600 transition-colors">
+                              {account.role}
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              {account.email}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Submit Button */}
             <button
