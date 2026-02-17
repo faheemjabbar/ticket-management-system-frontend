@@ -24,7 +24,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormInputs>({
+  const { register, handleSubmit, formState: { errors, isSubmitting }, setValue } = useForm<LoginFormInputs>({
     resolver: zodResolver(loginSchema)
   });
 
@@ -32,8 +32,14 @@ const LoginPage = () => {
     try {
       await login(data.email, data.password);
     } catch (err: any) {
-      // Error handled by context
+      // Error already handled by AuthContext and axios interceptor
     }
+  };
+
+  // Fill demo credentials
+  const fillDemoCredentials = () => {
+    setValue('email', 'admin@mail.com');
+    setValue('password', '123456');
   };
 
   return (
@@ -135,11 +141,24 @@ const LoginPage = () => {
               </label>
             </div>
 
+            {/* Demo Credentials Button */}
+            <button
+              type="button"
+              onClick={fillDemoCredentials}
+              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 rounded-xl transition-all border-2 border-slate-200 hover:border-slate-300 flex items-center justify-center gap-2 text-sm mt-4"
+            >
+              <Sparkles size={16} className="text-orange-500" />
+              Use Demo Credentials
+            </button>
+            <p className="text-center text-[10px] text-slate-400 mt-1">
+              Email: admin@mail.com • Password: 123456
+            </p>
+
             {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-black py-4 rounded-xl transition-all shadow-lg hover:shadow-orange-500/30 disabled:opacity-50 flex items-center justify-center gap-3 text-lg mt-8"
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-black py-4 rounded-xl transition-all shadow-lg hover:shadow-orange-500/30 disabled:opacity-50 flex items-center justify-center gap-3 text-lg mt-6"
             >
               {isSubmitting ? "Signing in..." : <><LogIn size={20}/> Login to Dashboard</>}
             </button>
