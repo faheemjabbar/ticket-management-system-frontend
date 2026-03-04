@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { commentAPI, type Comment } from '@/lib/api';
-import { MessageSquare, Send, Trash2, Edit2, X } from 'lucide-react';
+import { MessageSquare, Send, Trash2, Edit2, Lock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface TicketCommentsProps {
@@ -18,6 +18,7 @@ export default function TicketComments({ ticketId }: TicketCommentsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [commentType, setCommentType] = useState<'comment' | 'internal_note'>('comment');
 
   // Check if user can perform CRUD operations (dev, qa, pm only)
   const canManageComments = user && ['developer', 'qa', 'project-manager'].includes(user.role);
@@ -56,9 +57,12 @@ export default function TicketComments({ ticketId }: TicketCommentsProps) {
       setIsSubmitting(true);
       const comment = await commentAPI.create(ticketId, {
         content: newComment.trim(),
+        type: commentType,
+        isInternal: commentType === 'internal_note',
       });
       setComments(prev => [...prev, comment]);
       setNewComment('');
+      setCommentType('comment');
       toast.success('Comment added successfully');
     } catch (error) {
       console.error('Failed to add comment:', error);
@@ -184,6 +188,14 @@ export default function TicketComments({ ticketId }: TicketCommentsProps) {
                     <span className="text-[10px] text-gray-500">
                       {formatDate(comment.createdAt)}
                     </span>
+                    {comment.isInternal && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-yellow-100 text-yellow-700">
+                        🔒 Internal
+                      </span>
+                    )}
+                    {comment.isEdited && (
+                      <span className="text-[9px] text-gray-400">(edited)</span>
+                    )}
                   </div>
 
                   {editingId === comment.id ? (
@@ -258,19 +270,43 @@ export default function TicketComments({ ticketId }: TicketCommentsProps) {
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Add a comment..."
+                  placeholder={commentType === 'internal_note' ? 'Add an internal note (team only)...' : 'Add a comment...'}
                   className="w-full px-3 py-2 border border-gray-300 rounded text-xs text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none"
                   rows={3}
                   disabled={isSubmitting}
                 />
-                <div className="flex items-center justify-end gap-2 mt-2">
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCommentType('comment')}
+                      className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                        commentType === 'comment'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      💬 Comment
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCommentType('internal_note')}
+                      className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                        commentType === 'internal_note'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      🔒 Internal Note
+                    </button>
+                  </div>
                   <button
                     type="submit"
                     disabled={isSubmitting || !newComment.trim()}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-600 text-white rounded text-xs font-medium hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="w-3 h-3" />
-                    {isSubmitting ? 'Posting...' : 'Post Comment'}
+                    {isSubmitting ? 'Posting...' : 'Post'}
                   </button>
                 </div>
               </div>

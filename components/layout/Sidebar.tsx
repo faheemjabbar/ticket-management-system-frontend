@@ -4,6 +4,7 @@ import { memo, useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { UserRole } from '@/types/user.types';
 import { 
   LayoutDashboard, 
   Ticket, 
@@ -13,7 +14,9 @@ import {
   Settings,
   LogOut,
   Folder,
-  Building2
+  Building2,
+  Calendar,
+  Tag
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import OrganizationBadge from '@/components/ui/OrganizationBadge';
@@ -62,6 +65,18 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
       name: 'Projects',
       href: '/projects',
       icon: Folder,
+      roles: ['project-manager', 'qa'],  // Fixed: use hyphen
+    },
+    {
+      name: 'Sprints',
+      href: '/sprints',
+      icon: Calendar,
+      roles: ['project-manager', 'qa'],  // Fixed: use hyphen
+    },
+    {
+      name: 'Labels',
+      href: '/labels',
+      icon: Tag,
       roles: ['project-manager', 'qa'],  // Fixed: use hyphen
     },
     {
@@ -148,7 +163,7 @@ const Sidebar = memo(function Sidebar({ isOpen = true, onClose }: SidebarProps) 
           </div>
           
           {/* Only show New Ticket button for QA and Project Manager (not admin) */}
-          {user && (user.role === 'qa' || user.role === 'project-manager') && (
+          {user && (user.role === UserRole.QA || user.role === UserRole.PROJECT_MANAGER) && (
             <button
               onClick={() => router.push('/tickets/create')}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-sm hover:bg-orange-700 transition-colors text-sm font-medium"

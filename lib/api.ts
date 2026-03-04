@@ -1,65 +1,13 @@
 import axiosInstance from './axios';
+import type { User } from '@/types/user.types';
+import type { Project } from '@/types/project.types';
+import type { Organization } from '@/types/organization.types';
+import type { Ticket as TicketType, CreateTicketDto, LinkTicketDto, RelatedTicket, WatcherUser } from '@/types/ticket.types';
+import type { Sprint, CreateSprintDto, UpdateSprintDto, SprintStats } from '@/types/sprint.types';
+import type { Label, CreateLabelDto, UpdateLabelDto } from '@/types/label.types';
 
-// Types based on API specification
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'project-manager' | 'developer' | 'qa';
-  organization?: {  // UPDATED - now an object
-    id: string;
-    name: string;
-  } | null;
-  createdBy?: string;
-  avatar?: string;
-  isActive: boolean;
-  bio?: string;
-  timezone?: string;
-  language?: string;
-  createdAt: string;
-  updatedAt: string;
-  lastLogin?: string;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  description: string;
-  status: 'active' | 'archived' | 'completed';
-  organization: {  // UPDATED - now an object
-    id: string;
-    name: string;
-  };
-  createdBy: string;
-  teamMembers: {
-    userId: string;
-    userName: string;
-    role: 'project-manager' | 'qa' | 'developer';  // REMOVED 'admin' from team roles
-    assignedAt: string;
-  }[];
-  startDate: string;
-  endDate?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Ticket {
-  id: string;
-  title: string;
-  description: string;
-  status: 'pending' | 'assigned' | 'awaiting' | 'closed';
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  projectId: string;
-  projectName: string;
-  authorId: string;
-  authorName: string;
-  assignedToId?: string;
-  assignedToName?: string;
-  labels: string[];
-  deadline?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Re-export Ticket type from types directory
+export type Ticket = TicketType;
 
 export interface Comment {
   id: string;
@@ -70,6 +18,13 @@ export interface Comment {
   attachments: any[];
   createdAt: string;
   updatedAt: string;
+  // Phase 3: Enhanced comments
+  type?: 'comment' | 'internal_note' | 'system';
+  isInternal?: boolean;
+  mentions?: string[];
+  parentCommentId?: string;
+  isEdited?: boolean;
+  editedAt?: string;
 }
 
 export interface HistoryEntry {
@@ -101,15 +56,8 @@ export interface FileUploadResponse {
   uploadedAt: string;
 }
 
-export interface Organization {
-  id: string;
-  name: string;
-  description: string;
-  createdBy: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+// Re-export domain types for convenience
+export type { User, Project, Organization, Sprint, Label };
 
 // API Response types
 interface PaginatedResponse {
@@ -260,15 +208,16 @@ export const ticketAPI = {
   },
 
   // Create ticket (Project Manager/QA only)
-  create: async (data: {
-    title: string;
-    description: string;
-    priority: string;
-    projectId: string;
-    labels?: string[];
-    deadline?: string;
-  }): Promise<Ticket> => {
-    const response = await axiosInstance.post('/api/tickets', data);
+  create: async (data: CreateTicketDto): Promise<Ticket> => {
+    // Apply defaults for Phase 1 fields
+    const ticketData = {
+      ...data,
+      type: data.type || 'task',
+      status: data.status || 'backlog',
+      priorityScore: data.priorityScore || 1000,
+      acceptanceCriteria: data.acceptanceCriteria || [],
+    };
+    const response = await axiosInstance.post('/api/tickets', ticketData);
     return response.data;
   },
 
@@ -278,16 +227,16 @@ export const ticketAPI = {
     return response.data;
   },
 
-  // Assign ticket
+  // Assign ticket (Phase 1: No longer changes status automatically)
   assign: async (id: string, data: {
     assignedToId: string;
     assignedToName: string;
-  }): Promise<{ id: string; title: string; status: string; assignedToId: string; assignedToName: string }> => {
+  }): Promise<{ id: string; title: string; assignedToId: string; assignedToName: string }> => {
     const response = await axiosInstance.patch(`/api/tickets/${id}/assign`, data);
     return response.data;
   },
 
-  // Update ticket status
+  // Update ticket status (Phase 1: Separate from assignment)
   updateStatus: async (id: string, status: string): Promise<{ id: string; title: string; status: string }> => {
     const response = await axiosInstance.patch(`/api/tickets/${id}/status`, { status });
     return response.data;
@@ -296,6 +245,40 @@ export const ticketAPI = {
   // Delete ticket
   delete: async (id: string): Promise<{ message: string }> => {
     const response = await axiosInstance.delete(`/api/tickets/${id}`);
+    return response.data;
+  },
+
+  // Phase 2: Link tickets
+  linkTicket: async (id: string, data: LinkTicketDto): Promise<{ message: string }> => {
+    const response = await axiosInstance.post(`/api/tickets/${id}/link`, data);
+    return response.data;
+  },
+
+  // Phase 2: Unlink tickets
+  unlinkTicket: async (id: string, targetId: string, relationType: string): Promise<{ message: string }> => {
+    const response = await axiosInstance.delete(`/api/tickets/${id}/link/${targetId}/${relationType}`);
+    return response.data;
+  },
+
+  // Phase 2: Get related tickets
+  getRelatedTickets: async (id: string): Promise<RelatedTicket[]> => {
+    const response = await axiosInstance.get(`/api/tickets/${id}/related`);
+    return response.data;
+  },
+
+  // Phase 3: Watchers
+  addWatcher: async (id: string, userId: string): Promise<{ message: string }> => {
+    const response = await axiosInstance.post(`/api/tickets/${id}/watchers`, { userId });
+    return response.data;
+  },
+
+  removeWatcher: async (id: string, userId: string): Promise<{ message: string }> => {
+    const response = await axiosInstance.delete(`/api/tickets/${id}/watchers/${userId}`);
+    return response.data;
+  },
+
+  getWatchers: async (id: string): Promise<{ watchers: WatcherUser[]; count: number }> => {
+    const response = await axiosInstance.get(`/api/tickets/${id}/watchers`);
     return response.data;
   },
 };
@@ -312,6 +295,10 @@ export const commentAPI = {
   create: async (ticketId: string, data: {
     content: string;
     attachments?: any[];
+    type?: 'comment' | 'internal_note' | 'system';
+    isInternal?: boolean;
+    mentions?: string[];
+    parentCommentId?: string;
   }): Promise<Comment> => {
     const response = await axiosInstance.post(`/api/tickets/${ticketId}/comments`, data);
     return response.data;
@@ -447,6 +434,88 @@ export const organizationAPI = {
   // Delete organization
   delete: async (id: string): Promise<{ message: string }> => {
     const response = await axiosInstance.delete(`/api/organizations/${id}`);
+    return response.data;
+  },
+};
+
+// Label API functions (Phase 3)
+export const labelAPI = {
+  // Get all labels
+  getAll: async (params?: {
+    projectId?: string;
+    category?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse & { labels: Label[] }> => {
+    const response = await axiosInstance.get('/api/labels', { params });
+    return response.data;
+  },
+
+  // Get label by ID
+  getById: async (id: string): Promise<Label> => {
+    const response = await axiosInstance.get(`/api/labels/${id}`);
+    return response.data;
+  },
+
+  // Create label (Project Manager only)
+  create: async (data: CreateLabelDto): Promise<Label> => {
+    const response = await axiosInstance.post('/api/labels', data);
+    return response.data;
+  },
+
+  // Update label (Project Manager only)
+  update: async (id: string, data: UpdateLabelDto): Promise<Label> => {
+    const response = await axiosInstance.put(`/api/labels/${id}`, data);
+    return response.data;
+  },
+
+  // Delete label (Project Manager only)
+  delete: async (id: string): Promise<{ message: string }> => {
+    const response = await axiosInstance.delete(`/api/labels/${id}`);
+    return response.data;
+  },
+};
+
+// Sprint API functions (Phase 2)
+export const sprintAPI = {
+  // Get all sprints
+  getAll: async (params?: {
+    projectId?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse & { sprints: Sprint[] }> => {
+    const response = await axiosInstance.get('/api/sprints', { params });
+    return response.data;
+  },
+
+  // Get sprint by ID
+  getById: async (id: string): Promise<Sprint> => {
+    const response = await axiosInstance.get(`/api/sprints/${id}`);
+    return response.data;
+  },
+
+  // Get sprint statistics
+  getStats: async (id: string): Promise<SprintStats> => {
+    const response = await axiosInstance.get(`/api/sprints/${id}/stats`);
+    return response.data;
+  },
+
+  // Create sprint (Project Manager only)
+  create: async (data: CreateSprintDto): Promise<Sprint> => {
+    const response = await axiosInstance.post('/api/sprints', data);
+    return response.data;
+  },
+
+  // Update sprint (Project Manager only)
+  update: async (id: string, data: UpdateSprintDto): Promise<Sprint> => {
+    const response = await axiosInstance.put(`/api/sprints/${id}`, data);
+    return response.data;
+  },
+
+  // Delete sprint (Project Manager only)
+  delete: async (id: string): Promise<{ message: string }> => {
+    const response = await axiosInstance.delete(`/api/sprints/${id}`);
     return response.data;
   },
 };

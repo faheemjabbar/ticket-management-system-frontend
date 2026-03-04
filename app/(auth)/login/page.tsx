@@ -1,24 +1,13 @@
 "use client"
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Eye, EyeOff, LogIn, KeyRound, Mail, Sparkles } from 'lucide-react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginFormInputs } from '@/schemas/auth';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
-
-// Reusable Background Pattern Component
-const DottedBackground = ({ opacity = "opacity-[0.1]", size = "150px" }) => (
-  <div 
-    className={`absolute inset-0 ${opacity} pointer-events-none z-0`}
-    style={{ 
-      backgroundImage: 'url("/dotted.jpg")', 
-      backgroundRepeat: 'repeat',
-      backgroundSize: size,
-    }}
-  />
-);
+import DottedBackground from '@/components/ui/DottedBackground';
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -99,22 +88,25 @@ const LoginPage = () => {
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             {/* Email Field */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <label htmlFor="email" className="text-sm font-bold text-slate-700 flex items-center gap-2">
                 <Mail size={16} className="text-slate-400" /> Email Address
               </label>
               <input
+                id="email"
                 type="email"
                 placeholder="name@company.com"
                 {...register("email")}
+                aria-describedby={errors.email ? "email-error" : undefined}
+                aria-invalid={errors.email ? "true" : "false"}
                 className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all placeholder:text-slate-400 text-slate-900 bg-slate-50/50"
               />
-              {errors.email && <p className="text-red-500 text-xs font-semibold mt-1 ml-1">{errors.email.message}</p>}
+              {errors.email && <p id="email-error" className="text-red-500 text-xs font-semibold mt-1 ml-1" role="alert">{errors.email.message}</p>}
             </div>
 
             {/* Password Field */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                <label htmlFor="password" className="text-sm font-bold text-slate-700 flex items-center gap-2">
                   <KeyRound size={16} className="text-slate-400" /> Password
                 </label>
                 <Link href="/forgot-password" className="text-orange-600 hover:text-orange-700 text-xs font-bold transition-colors">
@@ -123,20 +115,24 @@ const LoginPage = () => {
               </div>
               <div className="relative">
                 <input
+                  id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   {...register("password")}
+                  aria-describedby={errors.password ? "password-error" : undefined}
+                  aria-invalid={errors.password ? "true" : "false"}
                   className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all placeholder:text-slate-400 text-slate-900 bg-slate-50/50"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-orange-600 transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              {errors.password && <p className="text-red-500 text-xs font-semibold mt-1 ml-1">{errors.password.message}</p>}
+              {errors.password && <p id="password-error" className="text-red-500 text-xs font-semibold mt-1 ml-1" role="alert">{errors.password.message}</p>}
             </div>
 
             {/* Remember Me */}

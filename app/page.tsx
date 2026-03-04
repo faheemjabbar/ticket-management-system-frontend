@@ -4,6 +4,8 @@ import React from 'react';
 import { CheckCircle2, Mail } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useRef } from 'react';
+import { authAPI } from '@/lib/api';
 
 // --- Sub-Components ---
 
@@ -72,11 +74,30 @@ const Testimonial: React.FC<TestimonialProps> = ({ image, quote, name, title, re
 // --- Main Page Component ---
 export default function TickFloLanding() {
   const router = useRouter();
+  const featureRef = useRef<HTMLDivElement>(null);
+  const footerCTARef = useRef<HTMLDivElement>(null);
 
-  const handleSignInClick = () => {
-    const isRegistered = localStorage.getItem("isRegistered");
-    if(isRegistered) router.push("/login");
-    else router.push("/register");
+    const scrollToFeature = () => {
+    featureRef.current?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  const scrollToFooterCTA = () => {
+    footerCTARef.current?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  const handleSignInClick = async () => {
+    try {
+      // Check if admin exists via API
+      const { exists } = await authAPI.checkAdminExists();
+      if (exists) {
+        router.push("/login");
+      } else {
+        router.push("/register");
+      }
+    } catch {
+      // If API call fails, default to login
+      router.push("/login");
+    }
   }
 
   return (
@@ -90,8 +111,8 @@ export default function TickFloLanding() {
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium text-gray-600">
             <button onClick={handleSignInClick} className="hover:text-orange-600 transition-colors">Sign in</button>
-            <a href="#" className="hover:text-orange-600 transition-colors">About</a>
-            <a href="#" className="hover:text-orange-600 transition-colors">Contact Us</a>
+            <a onClick={scrollToFeature} className="hover:text-orange-600 transition-colors">About</a>
+            <a onClick={scrollToFooterCTA} className="hover:text-orange-600 transition-colors">Contact Us</a>
           </div>
         </div>
       </nav>
@@ -116,7 +137,7 @@ export default function TickFloLanding() {
       </header>
 
       {/* Feature Split Section - WITH DOTS */}
-      <section className="relative bg-slate-900 py-20 text-white overflow-hidden">
+      <section ref={featureRef} className="relative bg-slate-900 py-20 text-white overflow-hidden">
         <DottedBackground opacity="opacity-[0.05]" size="250px" />
         <div className="max-w-6xl mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
@@ -170,11 +191,11 @@ export default function TickFloLanding() {
       </section>
 
       {/* Bottom Footer - NO DOTS */}
-      <footer className="border-t py-12 text-sm text-gray-500 bg-white">
+      <footer ref={footerCTARef} className="border-t py-12 text-sm text-gray-500 bg-white">
         <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="font-bold text-slate-900">© 2026 TickFlo</div>
           <div className="flex gap-8">
-            <a href="#" className="hover:text-orange-600 transition-colors font-medium">Contact</a>
+            <a onClick={scrollToFooterCTA} className="hover:text-orange-600 transition-colors font-medium">Contact</a>
             <a href="#" className="hover:text-orange-600 transition-colors font-medium">Privacy policy</a>
           </div>
         </div>

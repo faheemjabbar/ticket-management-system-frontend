@@ -101,11 +101,16 @@ export default function EditTicketPage() {
                 initialData={{
                   title: ticket.title,
                   description: ticket.description,
+                  type: ticket.type,
+                  status: ticket.status,
                   priority: ticket.priority,
                   projectId: ticket.projectId,
                   labels: ticket.labels,
                   assignedToId: ticket.assignedToId,
                   deadline: ticket.deadline?.split('T')[0], // Convert to YYYY-MM-DD format
+                  storyPoints: ticket.storyPoints,
+                  estimatedHours: ticket.estimatedHours,
+                  acceptanceCriteria: ticket.acceptanceCriteria,
                 }}
               />
             </div>

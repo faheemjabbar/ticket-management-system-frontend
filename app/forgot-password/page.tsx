@@ -8,24 +8,13 @@ import Link from 'next/link';
 import axiosInstance from '@/lib/axios';
 import { toast } from 'react-hot-toast';
 import { Mail, ArrowLeft, ShieldQuestion, Send, CheckCircle2 } from 'lucide-react';
+import DottedBackground from '@/components/ui/DottedBackground';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address")
 });
 
 type ForgotPasswordInputs = z.infer<typeof forgotPasswordSchema>;
-
-// Reusable Background Pattern
-const DottedBackground = ({ opacity = "opacity-[0.1]", size = "150px" }) => (
-  <div 
-    className={`absolute inset-0 ${opacity} pointer-events-none z-0`}
-    style={{ 
-      backgroundImage: 'url("/dotted.jpg")', 
-      backgroundRepeat: 'repeat',
-      backgroundSize: size,
-    }}
-  />
-);
 
 const ForgotPasswordPage = () => {
   const [emailSent, setEmailSent] = useState(false);

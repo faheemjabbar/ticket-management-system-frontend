@@ -6,21 +6,28 @@ import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useTickets } from '@/hooks/useTickets';
+import { useLabels } from '@/hooks/useLabels';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import PageErrorBoundary from '@/components/common/PageErrorBoundary';
 import StatusBadge from '@/components/ui/StatusBadge';
+import TypeBadge from '@/components/ui/TypeBadge';
 import PriorityBadge from '@/components/ui/PriorityBadge';
+import LabelBadge from '@/components/ui/LabelBadge';
 import EmptyState from '@/components/common/EmptyState';
-import { Search, Plus, Filter, Edit, Ticket } from 'lucide-react';
+import { Search, Plus, Filter, Edit, Ticket, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { API_CONSTANTS } from '@/constants';
 
 const TicketsPage = () => {
   const router = useRouter();
   const { user } = useAuth();
   const { tickets, loading, fetchTickets } = useTickets();
+  const { labels } = useLabels();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
 
   // Fetch tickets on mount
   useEffect(() => {
@@ -38,9 +45,28 @@ const TicketsPage = () => {
       const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
       const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
       
-      return matchesSearch && matchesStatus && matchesPriority;
+      // Label filtering: ticket must have ALL selected labels
+      const matchesLabels = selectedLabelIds.length === 0 || 
+        selectedLabelIds.every(labelId => ticket.labels?.includes(labelId));
+      
+      return matchesSearch && matchesStatus && matchesPriority && matchesLabels;
     });
-  }, [tickets, searchQuery, statusFilter, priorityFilter]);
+  }, [tickets, searchQuery, statusFilter, priorityFilter, selectedLabelIds]);
+
+  const handleToggleLabel = (labelId: string) => {
+    setSelectedLabelIds(prev => 
+      prev.includes(labelId) 
+        ? prev.filter(id => id !== labelId)
+        : [...prev, labelId]
+    );
+  };
+
+  const handleClearFilters = () => {
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setSelectedLabelIds([]);
+    setSearchQuery('');
+  };
 
 
   const handleViewTicket = (ticketId: string) => {
@@ -60,7 +86,8 @@ const TicketsPage = () => {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="space-y-5">
+        <PageErrorBoundary>
+          <div className="space-y-5">
           {/* Header */}
           <div className="flex items-start justify-between">
             <div>
@@ -171,8 +198,38 @@ const TicketsPage = () => {
               </div>
             </div>
 
+            {/* Label Filters */}
+            {labels.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-medium text-gray-700">Filter by labels:</span>
+                  {selectedLabelIds.length > 0 && (
+                    <button
+                      onClick={() => setSelectedLabelIds([])}
+                      className="text-xs text-blue-600 hover:text-blue-700"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {labels.map((label) => (
+                    <button
+                      key={label.id}
+                      onClick={() => handleToggleLabel(label.id)}
+                      className={`transition-all ${
+                        selectedLabelIds.includes(label.id) ? 'ring-2 ring-blue-500 ring-offset-1' : ''
+                      }`}
+                    >
+                      <LabelBadge name={label.name} color={label.color} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Active Filters Summary */}
-            {(statusFilter !== 'all' || priorityFilter !== 'all' || searchQuery) && (
+            {(statusFilter !== 'all' || priorityFilter !== 'all' || searchQuery || selectedLabelIds.length > 0) && (
               <div className="mt-2 flex items-center gap-1.5 text-[10px] text-gray-600">
                 <Filter className="w-3 h-3" />
                 <span>
@@ -250,7 +307,10 @@ const TicketsPage = () => {
                           <span className="text-xs text-gray-900">{ticket.projectName}</span>
                         </td>
                         <td className="px-3 py-2.5">
-                          <StatusBadge status={ticket.status} />
+                          <div className="flex items-center gap-2">
+                            <StatusBadge status={ticket.status} />
+                            <TypeBadge type={ticket.type || 'task'} />
+                          </div>
                         </td>
                         <td className="px-3 py-2.5">
                           <PriorityBadge priority={ticket.priority} />
@@ -284,6 +344,7 @@ const TicketsPage = () => {
 
 
         </div>
+        </PageErrorBoundary>
       </DashboardLayout>
     </ProtectedRoute>
   );

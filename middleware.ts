@@ -12,7 +12,18 @@ export function middleware(request: NextRequest) {
   const publicRoutes = ['/', '/login', '/register'];
   
   // Define protected routes (require authentication)
-  const protectedRoutes = ['/dashboard', '/tickets', '/users'];
+  const protectedRoutes = [
+    '/dashboard', 
+    '/tickets', 
+    '/users', 
+    '/projects', 
+    '/organizations',
+    '/sprints',
+    '/labels',
+    '/settings',
+    '/forgot-password',
+    '/reset-password'
+  ];
 
   // Check if current path is a public route
   const isPublicRoute = publicRoutes.some(route => pathname === route);

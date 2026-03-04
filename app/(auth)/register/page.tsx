@@ -10,20 +10,9 @@ import { z } from 'zod';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import DottedBackground from '@/components/ui/DottedBackground';
 
 type RegisterFormInputs = z.infer<typeof registerSchema>;
-
-// Reusable Background Pattern from Landing
-const DottedBackground = ({ opacity = "opacity-[0.1]", size = "150px" }) => (
-  <div 
-    className={`absolute inset-0 ${opacity} pointer-events-none z-0`}
-    style={{ 
-      backgroundImage: 'url("/dotted.jpg")', 
-      backgroundRepeat: 'repeat',
-      backgroundSize: size,
-    }}
-  />
-);
 
 const RegisterPage = () => {
   const router = useRouter();
@@ -120,68 +109,82 @@ const RegisterPage = () => {
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             {/* Full Name */}
             <div className="space-y-1.5">
-              <label className="text-sm font-bold text-slate-700 ml-1">Full Name</label>
+              <label htmlFor="name" className="text-sm font-bold text-slate-700 ml-1">Full Name</label>
               <input
+                id="name"
                 type="text"
                 placeholder="Enter your name"
                 {...register("name")}
+                aria-describedby={errors.name ? "name-error" : undefined}
+                aria-invalid={errors.name ? "true" : "false"}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all placeholder:text-slate-400 text-slate-900"
               />
-              {errors.name && <p className="text-red-500 text-xs font-medium mt-1 ml-1">{errors.name.message}</p>}
+              {errors.name && <p id="name-error" className="text-red-500 text-xs font-medium mt-1 ml-1" role="alert">{errors.name.message}</p>}
             </div>
 
             {/* Email */}
             <div className="space-y-1.5">
-              <label className="text-sm font-bold text-slate-700 ml-1">Work Email</label>
+              <label htmlFor="email" className="text-sm font-bold text-slate-700 ml-1">Work Email</label>
               <input
+                id="email"
                 type="email"
                 placeholder="admin@tickflo.com"
                 {...register("email")}
+                aria-describedby={errors.email ? "email-error" : undefined}
+                aria-invalid={errors.email ? "true" : "false"}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all placeholder:text-slate-400 text-slate-900"
               />
-              {errors.email && <p className="text-red-500 text-xs font-medium mt-1 ml-1">{errors.email.message}</p>}
+              {errors.email && <p id="email-error" className="text-red-500 text-xs font-medium mt-1 ml-1" role="alert">{errors.email.message}</p>}
             </div>
 
             {/* Password Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-slate-700 ml-1">Password</label>
+                <label htmlFor="password" className="text-sm font-bold text-slate-700 ml-1">Password</label>
                 <div className="relative">
                   <input
+                    id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     {...register("password")}
+                    aria-describedby={errors.password ? "password-error" : undefined}
+                    aria-invalid={errors.password ? "true" : "false"}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all placeholder:text-slate-400 text-slate-900"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-orange-600 transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-                {errors.password && <p className="text-red-500 text-xs font-medium mt-1 ml-1">{errors.password.message}</p>}
+                {errors.password && <p id="password-error" className="text-red-500 text-xs font-medium mt-1 ml-1" role="alert">{errors.password.message}</p>}
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-slate-700 ml-1">Confirm</label>
+                <label htmlFor="confirmPassword" className="text-sm font-bold text-slate-700 ml-1">Confirm</label>
                 <div className="relative">
                   <input
+                    id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="••••••••"
                     {...register("confirmPassword")}
+                    aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
+                    aria-invalid={errors.confirmPassword ? "true" : "false"}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all placeholder:text-slate-400 text-slate-900"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-orange-600 transition-colors"
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                   >
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-                {errors.confirmPassword && <p className="text-red-500 text-xs font-medium mt-1 ml-1">{errors.confirmPassword.message}</p>}
+                {errors.confirmPassword && <p id="confirmPassword-error" className="text-red-500 text-xs font-medium mt-1 ml-1" role="alert">{errors.confirmPassword.message}</p>}
               </div>
             </div>
 

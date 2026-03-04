@@ -7,6 +7,7 @@ import { organizationAPI, type Organization } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import EmptyState from '@/components/common/EmptyState';
 import { 
   Building2, 
   Plus, 
@@ -43,7 +44,12 @@ export default function OrganizationsPage() {
   // Load organizations
   useEffect(() => {
     if (user?.role === 'admin') {
+      const controller = new AbortController();
       loadOrganizations();
+      
+      return () => {
+        controller.abort();
+      };
     }
   }, [user]);
 
@@ -249,13 +255,16 @@ export default function OrganizationsPage() {
           </div>
 
           {filteredOrgs.length === 0 && (
-            <div className="bg-white rounded border border-gray-200 p-8 text-center">
-              <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm font-medium text-gray-900">No organizations found</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {searchQuery ? 'Try adjusting your search' : 'Create your first organization to get started'}
-              </p>
-            </div>
+            <EmptyState
+              icon={Building2}
+              title="No organizations found"
+              description={searchQuery ? 'Try adjusting your search' : 'Create your first organization to get started'}
+              action={{
+                label: 'Create Organization',
+                onClick: handleCreateOrg,
+                icon: Plus
+              }}
+            />
           )}
         </div>
 

@@ -173,7 +173,7 @@ export default function SettingsPage() {
 
   const handleSaveAppearance = async () => {
     try {
-      setLoading(false);
+      setLoading(true);
       // Note: Appearance settings would be saved to localStorage
       localStorage.setItem('appearanceSettings', JSON.stringify(appearanceSettings));
       toast.success('Appearance settings saved!');

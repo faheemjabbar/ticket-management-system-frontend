@@ -11,11 +11,16 @@ import {
   MessageSquare, 
   Clock,
   Hash,
-  ArrowRight
+  ArrowRight,
+  Link2
 } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
+import TypeBadge from '@/components/ui/TypeBadge';
 import PriorityBadge from '@/components/ui/PriorityBadge';
 import TicketComments from '@/components/tickets/TicketComments';
+import RelatedTicketsPanel from '@/components/tickets/RelatedTicketsPanel';
+import LinkTicketModal from '@/components/tickets/LinkTicketModal';
+import WatchersPanel from '@/components/tickets/WatchersPanel';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
@@ -29,6 +34,7 @@ interface TicketDetailModalProps {
 export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketDetailModalProps) {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showLinkModal, setShowLinkModal] = useState(false);
 
   useEffect(() => {
     if (isOpen && ticketId) {
@@ -101,9 +107,10 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
             {/* Left Content Column (Scrollable) */}
             <div className="flex-1 overflow-y-auto p-8 lg:p-10 custom-scrollbar">
               <div className="max-w-3xl">
-                {/* Status/Priority Row */}
-                <div className="flex items-center gap-2 mb-6">
+                {/* Status/Type/Priority Row */}
+                <div className="flex items-center gap-2 mb-6 flex-wrap">
                   <StatusBadge status={ticket.status} />
+                  <TypeBadge type={ticket.type || 'task'} />
                   <PriorityBadge priority={ticket.priority} />
                 </div>
 
@@ -175,6 +182,42 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                 </div>
               </div>
 
+              {/* Estimation Section (Phase 1) */}
+              {(ticket.storyPoints || ticket.estimatedHours) && (
+                <div>
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Estimation</h4>
+                  <div className="space-y-2">
+                    {ticket.storyPoints && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-slate-600">Story Points</span>
+                        <span className="text-[11px] font-bold text-slate-900">{ticket.storyPoints}</span>
+                      </div>
+                    )}
+                    {ticket.estimatedHours && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-slate-600">Estimated Hours</span>
+                        <span className="text-[11px] font-bold text-slate-900">{ticket.estimatedHours}h</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Acceptance Criteria Section (Phase 1) */}
+              {ticket.acceptanceCriteria && ticket.acceptanceCriteria.length > 0 && (
+                <div>
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Acceptance Criteria</h4>
+                  <div className="space-y-2">
+                    {ticket.acceptanceCriteria.map((criteria, idx) => (
+                      <div key={idx} className="flex items-start gap-2 text-[11px] text-slate-600">
+                        <span className="text-orange-500 font-bold">{idx + 1}.</span>
+                        <span className="flex-1">{criteria}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Tags Section */}
               {ticket.labels && ticket.labels.length > 0 && (
                 <div>
@@ -216,11 +259,45 @@ export default function TicketDetailModal({ ticketId, isOpen, onClose }: TicketD
                   </div>
                 )}
               </div>
+
+              {/* Related Tickets Section (Phase 2) */}
+              <div className="pt-6 border-t border-slate-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <Link2 className="w-3 h-3" /> Related Tickets
+                  </h4>
+                  <button
+                    onClick={() => setShowLinkModal(true)}
+                    className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest"
+                  >
+                    + Link
+                  </button>
+                </div>
+                <RelatedTicketsPanel ticketId={ticketId} onUpdate={loadTicket} />
+              </div>
+
+              {/* Watchers Section (Phase 3) */}
+              <div className="pt-6 border-t border-slate-200">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                  Watchers
+                </h4>
+                <WatchersPanel ticketId={ticketId} onUpdate={loadTicket} />
+              </div>
             </div>
 
           </div>
         ) : (
           <div className="p-20 text-center text-slate-500 text-sm">Ticket not found.</div>
+        )}
+
+        {/* Link Ticket Modal */}
+        {ticket && (
+          <LinkTicketModal
+            isOpen={showLinkModal}
+            onClose={() => setShowLinkModal(false)}
+            ticket={ticket}
+            onLink={loadTicket}
+          />
         )}
       </div>
     </div>

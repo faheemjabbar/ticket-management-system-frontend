@@ -40,7 +40,12 @@ export default function OrganizationDetailPage() {
   // Load organization details
   useEffect(() => {
     if (user?.role === 'admin' && orgId) {
+      const controller = new AbortController();
       loadOrganizationDetails();
+      
+      return () => {
+        controller.abort();
+      };
     }
   }, [user, orgId]);
 
@@ -52,10 +57,13 @@ export default function OrganizationDetailPage() {
       const orgData = await organizationAPI.getById(orgId);
       setOrganization(orgData);
 
-      // Load all users to find the project manager
-      const usersResponse = await userAPI.getAll({ limit: 1000 });
+      // Load only project managers from this organization (more efficient than loading all 1000 users)
+      const usersResponse = await userAPI.getAll({ 
+        role: 'project-manager',
+        limit: 10 
+      });
       const pm = usersResponse.users.find(u => 
-        u.organization?.id === orgId && u.role === 'project-manager'
+        u.organization?.id === orgId
       );
       setProjectManager(pm || null);
 

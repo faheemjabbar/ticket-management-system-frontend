@@ -22,6 +22,8 @@ import {
 import { toast } from 'react-hot-toast';
 import StatusBadge from '@/components/ui/StatusBadge';
 import PriorityBadge from '@/components/ui/PriorityBadge';
+import { handleApiError } from '@/utils/errorHandler';
+import { API_CONSTANTS } from '@/constants';
 
 export default function ProjectDetailPage() {
   const router = useRouter();
@@ -44,14 +46,14 @@ export default function ProjectDetailPage() {
         // Load project and its tickets in parallel
         const [projectData, ticketsResponse] = await Promise.all([
           projectAPI.getById(projectId),
-          ticketAPI.getAll({ projectId, limit: 1000 })
+          ticketAPI.getAll({ projectId, limit: API_CONSTANTS.DEFAULT_PAGE_SIZE })
         ]);
 
         setProject(projectData);
         setProjectTickets(ticketsResponse.tickets);
         
-      } catch {
-        toast.error('Failed to load project data');
+      } catch (error) {
+        handleApiError(error);
       } finally {
         setLoading(false);
       }

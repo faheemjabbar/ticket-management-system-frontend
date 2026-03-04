@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import axiosInstance, { setLoggingOut } from '@/lib/axios';
 import { toast } from 'react-hot-toast';
 import { User } from '@/types/user.types';
+import { isTokenExpired } from '@/lib/auth-utils';
 
 // Auth context type
 interface AuthContextType {
@@ -31,6 +32,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const storedUser = localStorage.getItem('user');
       
       if (token && storedUser) {
+        // Check if token is expired
+        if (isTokenExpired(token)) {
+          // Clear expired session
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          return null;
+        }
         return JSON.parse(storedUser);
       }
     } catch (error) {

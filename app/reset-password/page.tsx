@@ -9,6 +9,7 @@ import Link from 'next/link';
 import axiosInstance from '@/lib/axios';
 import { toast } from 'react-hot-toast';
 import { Eye, EyeOff, Lock, CheckCircle2, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
+import DottedBackground from '@/components/ui/DottedBackground';
 
 const resetPasswordSchema = z.object({
   newPassword: z.string()
@@ -23,17 +24,6 @@ const resetPasswordSchema = z.object({
 });
 
 type ResetPasswordInputs = z.infer<typeof resetPasswordSchema>;
-
-const DottedBackground = ({ opacity = "opacity-[0.1]", size = "150px" }) => (
-  <div 
-    className={`absolute inset-0 ${opacity} pointer-events-none z-0`}
-    style={{ 
-      backgroundImage: 'url("/dotted.jpg")', 
-      backgroundRepeat: 'repeat',
-      backgroundSize: size,
-    }}
-  />
-);
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
