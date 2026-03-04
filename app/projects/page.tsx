@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { projectAPI, ticketAPI, type Project } from '@/lib/api';
-import ProjectModal from '@/components/projects/ProjectModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import PageErrorBoundary from '@/components/common/PageErrorBoundary';
 import { useAdminRedirect } from '@/hooks/useAdminRedirect';
 import { 
   Search, 
@@ -25,6 +25,11 @@ import {
   Building2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { handleApiError } from '@/utils/errorHandler';
+import { API_CONSTANTS } from '@/constants';
+
+// Lazy load heavy modal component
+const ProjectModal = lazy(() => import('@/components/projects/ProjectModal'));
 
 interface ProjectWithStats extends Project {
   ticketCount: {
@@ -54,28 +59,32 @@ export default function ProjectsPage() {
 
   // Load projects and their ticket stats
   useEffect(() => {
+    const controller = new AbortController();
+    
     const loadProjects = async () => {
       try {
         setLoading(true);
         
         // Get all projects
-        const projectsResponse = await projectAPI.getAll({ limit: 100 });
+        const projectsResponse = await projectAPI.getAll({ limit: API_CONSTANTS.DEFAULT_PAGE_SIZE });
         
-        // Get ticket counts for each project
+        // Get ticket counts for each project (fetch only 1 ticket to get total count from pagination)
         const projectsWithStats = await Promise.all(
           projectsResponse.projects.map(async (project) => {
             try {
-              const ticketsResponse = await ticketAPI.getAll({ 
-                projectId: project.id,
-                limit: 1000 
-              });
+              // Fetch tickets with minimal limit to get counts from response metadata
+              const [pendingRes, assignedRes, closedRes, totalRes] = await Promise.all([
+                ticketAPI.getAll({ projectId: project.id, status: 'pending', limit: 1 }),
+                ticketAPI.getAll({ projectId: project.id, status: 'assigned', limit: 1 }),
+                ticketAPI.getAll({ projectId: project.id, status: 'closed', limit: 1 }),
+                ticketAPI.getAll({ projectId: project.id, limit: 1 }),
+              ]);
               
-              const tickets = ticketsResponse.tickets;
               const ticketCount = {
-                total: tickets.length,
-                pending: tickets.filter(t => t.status === 'pending').length,
-                assigned: tickets.filter(t => t.status === 'assigned').length,
-                closed: tickets.filter(t => t.status === 'closed').length,
+                total: totalRes.total || 0,
+                pending: pendingRes.total || 0,
+                assigned: assignedRes.total || 0,
+                closed: closedRes.total || 0,
               };
               
               return { ...project, ticketCount };
@@ -90,14 +99,18 @@ export default function ProjectsPage() {
         
         setProjects(projectsWithStats);
         
-      } catch {
-        toast.error('Failed to load projects');
+      } catch (error) {
+        handleApiError(error);
       } finally {
         setLoading(false);
       }
     };
 
     loadProjects();
+    
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   // Calculate stats
@@ -188,8 +201,8 @@ export default function ProjectsPage() {
       toast.success(`Project "${projectToDelete.name}" deleted successfully!`);
       setDeleteDialogOpen(false);
       setProjectToDelete(null);
-    } catch {
-      toast.error('Failed to delete project');
+    } catch (error) {
+      handleApiError(error);
     } finally {
       setIsDeleting(false);
     }
@@ -217,6 +230,7 @@ export default function ProjectsPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
+        <PageErrorBoundary>
           <div className="space-y-5">
             {/* Header */}
             <div className="flex items-start justify-between">
@@ -457,12 +471,14 @@ export default function ProjectsPage() {
           </div>
 
           {/* Project Modal */}
-          <ProjectModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            project={selectedProject}
-            mode={modalMode}
-          />
+          <Suspense fallback={<LoadingSpinner />}>
+            <ProjectModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              project={selectedProject}
+              mode={modalMode}
+            />
+          </Suspense>
 
           {/* Delete Confirmation Dialog */}
           <ConfirmDialog
@@ -476,7 +492,8 @@ export default function ProjectsPage() {
             variant="danger"
             isLoading={isDeleting}
           />
-        </DashboardLayout>
-      </ProtectedRoute>
-    );
+        </PageErrorBoundary>
+      </DashboardLayout>
+    </ProtectedRoute>
+  );
 }

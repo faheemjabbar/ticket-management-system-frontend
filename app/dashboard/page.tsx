@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
+import { UserRole } from '@/types/user.types';
+import { canTransitionTo } from '@/types/ticket.types';
 import { Search, ChevronDown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useAdminRedirect } from '@/hooks/useAdminRedirect';
+import LabelBadge from '@/components/ui/LabelBadge';
 import {
   DndContext,
   DragOverlay,
@@ -28,16 +30,22 @@ import {
 } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ticketAPI, projectAPI, type Ticket as APITicket, type Project } from '@/lib/api';
-import TicketDetailModal from '@/components/tickets/TicketDetailModal';
+import { ticketAPI, projectAPI, labelAPI, type Ticket as APITicket, type Project } from '@/lib/api';
+import PageErrorBoundary from '@/components/common/PageErrorBoundary';
+import { API_CONSTANTS, UI_CONSTANTS } from '@/constants';
+
+// Lazy load heavy modal component
+const TicketDetailModal = lazy(() => import('@/components/tickets/TicketDetailModal'));
 
 // Dashboard ticket interface (simplified from API ticket)
 interface DashboardTicket {
   id: string;
   title: string;
+  description: string;
   author: string;
   time: string;
   labels: string[];
+  labelObjects?: { id: string; name: string; color: string }[];
   project: string;
   projectName: string;
   status: string;
@@ -89,57 +97,68 @@ function SortableTicketCard({ ticket, onClick, onCommentClick, onSelfAssign, isD
     >
       {/* Ticket Title */}
       <div className="flex items-start justify-between mb-1.5">
-        <h4 className="text-xs font-semibold text-gray-900 line-clamp-2 flex-1 leading-tight">
+        <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 flex-1 leading-tight">
           {ticket.title}
         </h4>
         <span className="text-[9px] text-gray-500 ml-1.5">#{ticket.id}</span>
       </div>
 
-      {/* Ticket Meta */}
-      <div className="text-[12px] text-gray-500 pt-2">
-        <span className="font-medium">{ticket.author}</span>
-        <span className="mx-1">•</span>
-        <span>{ticket.time}</span>
-      </div>
+      {/* Description */}
+      {ticket.description && (
+        <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+          {ticket.description}
+        </p>
+      )}
 
       {/* Labels */}
-      <div className="flex flex-wrap gap-1">
-        {ticket.labels.map((label: string, idx: number) => (
-          <span
-            key={idx}
-            className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-100 text-blue-700"
-          >
-            {label}
-          </span>
-        ))}
-      </div>
+      {ticket.labelObjects && ticket.labelObjects.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {ticket.labelObjects.map((label) => (
+            <span
+              key={label.id}
+              className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium"
+              style={{
+                backgroundColor: `${label.color}20`,
+                color: label.color,
+                border: `1px solid ${label.color}40`,
+              }}
+            >
+              {label.name}
+            </span>
+          ))}
+        </div>
+      )}
 
-      {/* Comment Icon / Self-Assign Link */}
-      <div className="mt-2 flex items-center justify-end">
-        {isDeveloper && isPending ? (
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelfAssign(ticket.id);
-            }}
-            className="text-[10px] text-orange-600 hover:text-orange-700 font-medium"
-          >
-            Assign yourself
-          </button>
-        ) : (
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              onCommentClick();
-            }}
-            className="text-gray-400 hover:text-gray-600"
-            title="View details and comments"
-          >
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-            </svg>
-          </button>
-        )}
+      {/* Bottom Row: Author, Time, and Action */}
+      <div className="flex items-center justify-between text-[10px] text-gray-500">
+        <span className="font-medium">Created by {ticket.author.toUpperCase()}</span>
+        <div className="flex items-center gap-1">
+          <span>{ticket.time}</span>
+          {isDeveloper && isPending ? (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelfAssign(ticket.id);
+              }}
+              className="text-[10px] text-orange-600 hover:text-orange-700 font-medium ml-1"
+            >
+              Assign yourself
+            </button>
+          ) : (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                onCommentClick();
+              }}
+              className="text-gray-400 hover:text-gray-600 ml-1"
+              title="View details and comments"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -171,9 +190,11 @@ function convertToDashboardTicket(apiTicket: APITicket): DashboardTicket {
   return {
     id: apiTicket.id,
     title: apiTicket.title,
+    description: apiTicket.description,
     author: apiTicket.authorName,
     time: formatRelativeTime(apiTicket.createdAt),
     labels: apiTicket.labels,
+    labelObjects: apiTicket.labelObjects,
     project: apiTicket.projectId,
     projectName: apiTicket.projectName,
     status: apiTicket.status,
@@ -182,7 +203,6 @@ function convertToDashboardTicket(apiTicket: APITicket): DashboardTicket {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const router = useRouter();
   useAdminRedirect();
   
   // State
@@ -193,12 +213,16 @@ export default function DashboardPage() {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // State to track visible ticket count per column
+  // State to track visible ticket count per column (increased initial limit)
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({
-    pending: 5,
-    assigned: 5,
-    awaiting: 5,
-    closed: 5,
+    backlog: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
+    todo: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
+    in_progress: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
+    in_review: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
+    qa_testing: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
+    done: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
+    closed: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
+    blocked: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
   });
 
   // State for project filter
@@ -217,14 +241,40 @@ export default function DashboardPage() {
       try {
         setLoading(true);
         
-        // Load tickets - all roles can access
-        const ticketsResponse = await ticketAPI.getAll({ limit: 100 });
-        const dashboardTickets = ticketsResponse.tickets.map(convertToDashboardTicket);
+        // Load tickets and labels in parallel
+        const [ticketsResponse, labelsResponse] = await Promise.all([
+          ticketAPI.getAll({ limit: API_CONSTANTS.DEFAULT_PAGE_SIZE }),
+          labelAPI.getAll({ limit: API_CONSTANTS.DEFAULT_PAGE_SIZE })
+        ]);
+        
+        // Create a map of label IDs to label objects
+        const labelMap = new Map(
+          labelsResponse.labels.map(label => [label.id, label])
+        );
+        
+        // Map tickets and populate labelObjects
+        const dashboardTickets = ticketsResponse.tickets.map(ticket => {
+          const dashboardTicket = convertToDashboardTicket(ticket);
+          // Populate labelObjects from label IDs (map full labels to simplified format)
+          dashboardTicket.labelObjects = ticket.labels
+            .map(labelId => {
+              const fullLabel = labelMap.get(labelId);
+              if (!fullLabel) return undefined;
+              return {
+                id: fullLabel.id,
+                name: fullLabel.name,
+                color: fullLabel.color
+              };
+            })
+            .filter((label): label is { id: string; name: string; color: string } => label !== undefined);
+          return dashboardTicket;
+        });
+        
         setTickets(dashboardTickets);
 
         // Load projects only for QA and Project Manager
-        if (user && (user.role === 'qa' || user.role === 'project-manager')) {
-          const projectsResponse = await projectAPI.getAll({ limit: 100 });
+        if (user && (user.role === UserRole.QA || user.role === UserRole.PROJECT_MANAGER)) {
+          const projectsResponse = await projectAPI.getAll({ limit: API_CONSTANTS.DEFAULT_PAGE_SIZE });
           const projectsWithAll = [
             { 
               id: 'all', 
@@ -285,13 +335,19 @@ export default function DashboardPage() {
     const activeTicket = tickets.find(t => t.id === active.id);
     const overColumn = over.id as string;
 
-    // Validate that overColumn is a valid status
-    const validStatuses = ['pending', 'assigned', 'awaiting', 'closed'];
+    // Validate that overColumn is a valid status (Phase 1: New statuses)
+    const validStatuses = ['backlog', 'todo', 'in_progress', 'in_review', 'qa_testing', 'done', 'closed', 'blocked'];
     if (!validStatuses.includes(overColumn)) {
       return;
     }
 
     if (activeTicket && activeTicket.status !== overColumn) {
+      // Phase 1: Validate status transition
+      if (!canTransitionTo(activeTicket.status, overColumn)) {
+        toast.error(`Cannot move ticket from ${formatStatus(activeTicket.status)} to ${formatStatus(overColumn)}`);
+        return;
+      }
+
       // Store original status for rollback
       const originalStatus = activeTicket.status;
       
@@ -307,7 +363,7 @@ export default function DashboardPage() {
       try {
         // Update ticket status via API
         await ticketAPI.updateStatus(activeTicket.id, overColumn);
-        toast.success(`Ticket moved to ${overColumn}`);
+        toast.success(`Ticket moved to ${formatStatus(overColumn)}`);
       } catch (error) {
         console.error('Failed to update ticket status:', error);
         // Revert on error
@@ -326,7 +382,7 @@ export default function DashboardPage() {
   const handleSeeMore = (columnId: string) => {
     setVisibleCounts(prev => ({
       ...prev,
-      [columnId]: prev[columnId] + 5,
+      [columnId]: prev[columnId] + UI_CONSTANTS.TICKETS_LOAD_MORE_INCREMENT,
     }));
   };
 
@@ -345,20 +401,24 @@ export default function DashboardPage() {
       filtered = filtered.filter(ticket => 
         ticket.title.toLowerCase().includes(query) ||
         ticket.author.toLowerCase().includes(query) ||
-        ticket.labels.some(label => label.toLowerCase().includes(query))
+        ticket.labelObjects?.some(label => label.name.toLowerCase().includes(query))
       );
     }
     
     return filtered;
   }, [tickets, selectedProject, searchQuery]);
 
-  // Group tickets by status
+  // Group tickets by status (Phase 1: Updated statuses)
   const ticketsByStatus = useMemo(() => {
     const grouped: Record<string, DashboardTicket[]> = {
-      pending: [],
-      assigned: [],
-      awaiting: [],
+      backlog: [],
+      todo: [],
+      in_progress: [],
+      in_review: [],
+      qa_testing: [],
+      done: [],
       closed: [],
+      blocked: [],
     };
 
     filteredTickets.forEach(ticket => {
@@ -370,18 +430,45 @@ export default function DashboardPage() {
     return grouped;
   }, [filteredTickets]);
 
-  // Column definitions
+  // Column definitions (Phase 1: New statuses)
   const columns = [
-    { id: 'pending', title: 'Pending' },
-    { id: 'assigned', title: 'Assigned' },
-    { id: 'awaiting', title: 'Awaiting response' },
+    { id: 'backlog', title: 'Backlog' },
+    { id: 'todo', title: 'To Do' },
+    { id: 'in_progress', title: 'In Progress' },
+    { id: 'in_review', title: 'In Review' },
+    { id: 'qa_testing', title: 'QA Testing' },
+    { id: 'done', title: 'Done' },
     { id: 'closed', title: 'Closed' },
+    { id: 'blocked', title: 'Blocked' },
   ];
 
-  // Role-based column filtering
-  const roleBasedColumns = user?.role === 'developer'
-    ? columns.filter(col => col.id !== 'awaiting') // Show pending, assigned, closed for developers
-    : columns; // Show all columns for QA and Admin
+  // Helper function to format status for display
+  const formatStatus = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      'backlog': 'Backlog',
+      'todo': 'To Do',
+      'in_progress': 'In Progress',
+      'in_review': 'In Review',
+      'qa_testing': 'QA Testing',
+      'done': 'Done',
+      'closed': 'Closed',
+      'blocked': 'Blocked',
+    };
+    return statusMap[status] || status;
+  };
+
+  // Role-based column filtering (memoized to prevent recomputation on every render)
+  const roleBasedColumns = useMemo(() => {
+    if (user?.role === UserRole.DEVELOPER) {
+      // Developers see: backlog, todo, in_progress, in_review, done, closed
+      return columns.filter(col => !['qa_testing', 'blocked'].includes(col.id));
+    } else if (user?.role === UserRole.QA) {
+      // QA sees all columns
+      return columns;
+    }
+    // Project managers see all columns
+    return columns;
+  }, [user?.role, columns]);
 
   // Handle self-assignment for developers
   const handleSelfAssign = async (ticketId: string) => {
@@ -439,14 +526,15 @@ export default function DashboardPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="space-y-3">
+        <PageErrorBoundary>
+          <div className="space-y-3">
           {/* Organization Context Header */}
           {user && (
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">Ticket Dashboard</h1>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {user.role === 'admin' 
+                  {user.role === UserRole.ADMIN 
                     ? 'Viewing all organizations' 
                     : user.organization 
                       ? `Organization: ${user.organization.name}`
@@ -474,7 +562,7 @@ export default function DashboardPage() {
             
             <div className="flex flex-col items-end gap-3">
               {/* Project Filter Dropdown - Only for QA and Admin */}
-              {user && (user.role === 'qa' || user.role === 'admin') && (
+              {user && (user.role === UserRole.QA || user.role === UserRole.ADMIN) && (
                 <div className="relative">
                   <button 
                     onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
@@ -501,10 +589,14 @@ export default function DashboardPage() {
                               setIsProjectDropdownOpen(false);
                               // Reset visible counts when changing project
                               setVisibleCounts({
-                                pending: 5,
-                                assigned: 5,
-                                awaiting: 5,
-                                closed: 5,
+                                backlog: 10,
+                                todo: 10,
+                                in_progress: 10,
+                                in_review: 10,
+                                qa_testing: 10,
+                                done: 10,
+                                closed: 10,
+                                blocked: 10,
                               });
                             }}
                             className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg ${
@@ -538,41 +630,41 @@ export default function DashboardPage() {
                     {/* Column Header */}
                     <div className="flex items-center justify-between mb-2.5">
                       <h3 className="text-xs font-semibold text-gray-900">
-                        {column.id === 'pending' && user?.role === 'developer' 
-                          ? 'Available Tickets' 
-                          : column.title} <span className="text-gray-500 text-[10px]">({columnTickets.length})</span>
+                        {column.title} <span className="text-gray-500 text-[10px]">({columnTickets.length})</span>
                       </h3>
                     </div>
 
-                    {/* Droppable Area */}
-                    <DroppableColumn id={column.id}>
-                      <SortableContext
-                        items={columnTickets.map(t => t.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        {columnTickets.slice(0, visibleCounts[column.id]).map((ticket) => (
-                          <SortableTicketCard
-                            key={ticket.id}
-                            ticket={ticket}
-                            onClick={() => handleTicketClick(ticket.id)}
-                            onCommentClick={() => handleCommentClick(ticket.id)}
-                            onSelfAssign={handleSelfAssign}
-                            isDeveloper={user?.role === 'developer'}
-                            isPending={column.id === 'pending'}
-                          />
-                        ))}
-                        
-                        {/* See More Button */}
-                        {visibleCounts[column.id] < columnTickets.length && (
-                          <button
-                            onClick={() => handleSeeMore(column.id)}
-                            className="w-full py-1.5 text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-colors"
-                          >
-                            See more
-                          </button>
-                        )}
-                      </SortableContext>
-                    </DroppableColumn>
+                    {/* Droppable Area with Scrollbar */}
+                    <div className="max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar">
+                      <DroppableColumn id={column.id}>
+                        <SortableContext
+                          items={columnTickets.map(t => t.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {columnTickets.slice(0, visibleCounts[column.id]).map((ticket) => (
+                            <SortableTicketCard
+                              key={ticket.id}
+                              ticket={ticket}
+                              onClick={() => handleTicketClick(ticket.id)}
+                              onCommentClick={() => handleCommentClick(ticket.id)}
+                              onSelfAssign={handleSelfAssign}
+                              isDeveloper={user?.role === 'developer'}
+                              isPending={column.id === 'backlog' || column.id === 'todo'}
+                            />
+                          ))}
+                          
+                          {/* See More Button */}
+                          {visibleCounts[column.id] < columnTickets.length && (
+                            <button
+                              onClick={() => handleSeeMore(column.id)}
+                              className="w-full py-1.5 text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-colors"
+                            >
+                              See more ({columnTickets.length - visibleCounts[column.id]} remaining)
+                            </button>
+                          )}
+                        </SortableContext>
+                      </DroppableColumn>
+                    </div>
                   </div>
                 );
               })}
@@ -593,16 +685,13 @@ export default function DashboardPage() {
                   <div className="text-[10px] text-gray-500 mb-2">
                     <span className="font-medium">{activeTicket.author}</span>
                   </div>
-                  <div className="flex flex-wrap gap-1">
-                    {activeTicket.labels.map((label: string, idx: number) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700"
-                      >
-                        {label}
-                      </span>
-                    ))}
-                  </div>
+                  {activeTicket.labelObjects && activeTicket.labelObjects.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {activeTicket.labelObjects.map((label) => (
+                        <LabelBadge key={label.id} name={label.name} color={label.color} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : null}
             </DragOverlay>
@@ -610,13 +699,16 @@ export default function DashboardPage() {
 
           {/* Ticket Detail Modal */}
           {selectedTicketId && (
-            <TicketDetailModal
-              ticketId={selectedTicketId}
-              isOpen={isModalOpen}
-              onClose={closeModal}
-            />
+            <Suspense fallback={<LoadingSpinner />}>
+              <TicketDetailModal
+                ticketId={selectedTicketId}
+                isOpen={isModalOpen}
+                onClose={closeModal}
+              />
+            </Suspense>
           )}
         </div>
+        </PageErrorBoundary>
       </DashboardLayout>
     </ProtectedRoute>
   );

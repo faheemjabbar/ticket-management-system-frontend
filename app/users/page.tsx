@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -8,7 +8,8 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { userAPI, projectAPI, type User, type Project } from '@/lib/api';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import CreateUserModal from '@/components/users/CreateUserModal';
+import PageErrorBoundary from '@/components/common/PageErrorBoundary';
+import EmptyState from '@/components/common/EmptyState';
 import { 
   Search, 
   Plus, 
@@ -21,6 +22,11 @@ import {
   Building2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { handleApiError } from '@/utils/errorHandler';
+import { API_CONSTANTS } from '@/constants';
+
+// Lazy load heavy modal component
+const CreateUserModal = lazy(() => import('@/components/users/CreateUserModal'));
 
 interface UserWithProjects extends User {
   projectNames: string[];
@@ -43,13 +49,22 @@ export default function UsersPage() {
 
   // Load users and projects - extracted as callable function
   const loadData = async () => {
+    // Don't load if no user
+    if (!currentUser) return;
+    
+    // Redirect admin to organizations
+    if (currentUser.role === 'admin') {
+      router.push('/organizations');
+      return;
+    }
+    
     try {
       setLoading(true);
       
       // Load users and projects in parallel
       const [usersResponse, projectsResponse] = await Promise.all([
-        userAPI.getAll({ limit: 100 }),
-        projectAPI.getAll({ limit: 100 })
+        userAPI.getAll({ limit: API_CONSTANTS.DEFAULT_PAGE_SIZE }),
+        projectAPI.getAll({ limit: API_CONSTANTS.DEFAULT_PAGE_SIZE })
       ]);
 
       setProjects(projectsResponse.projects);
@@ -72,11 +87,7 @@ export default function UsersPage() {
       setUsers(usersWithProjects);
       
     } catch (error: any) {
-      console.error('Failed to load users:', error);
-      // Don't show toast for 401 errors - axios interceptor handles it
-      if (error.response?.status !== 401) {
-        toast.error('Failed to load users data');
-      }
+      handleApiError(error);
     } finally {
       setLoading(false);
     }
@@ -93,11 +104,17 @@ export default function UsersPage() {
       return;
     }
     
+    const controller = new AbortController();
+    
     const initLoad = async () => {
       await loadData();
     };
 
     initLoad();
+    
+    return () => {
+      controller.abort();
+    };
   }, [currentUser, router]);
 
   // Filter users
@@ -136,8 +153,8 @@ export default function UsersPage() {
       
       const user = users.find(u => u.id === userId);
       toast.success(`User ${user?.isActive ? 'deactivated' : 'activated'} successfully`);
-    } catch {
-      toast.error('Failed to update user status');
+    } catch (error) {
+      handleApiError(error);
     }
   };
 
@@ -159,8 +176,8 @@ export default function UsersPage() {
       toast.success(`User "${userToDelete.name}" deleted successfully`);
       setDeleteDialogOpen(false);
       setUserToDelete(null);
-    } catch {
-      toast.error('Failed to delete user');
+    } catch (error) {
+      handleApiError(error);
     } finally {
       setIsDeleting(false);
     }
@@ -189,6 +206,7 @@ export default function UsersPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
+        <PageErrorBoundary>
           <div className="space-y-5">
             {/* Header */}
             <div className="flex items-start justify-between">
@@ -431,16 +449,20 @@ export default function UsersPage() {
               </div>
 
               {filteredUsers.length === 0 && (
-                <div className="text-center py-8">
-                  <UserX className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-xs font-medium text-gray-900">No users found</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">
-                    {searchQuery || filterRole !== 'all' || filterStatus !== 'all'
+                <EmptyState
+                  icon={UserX}
+                  title="No users found"
+                  description={
+                    searchQuery || filterRole !== 'all' || filterStatus !== 'all'
                       ? 'Try adjusting your filters'
                       : 'No users in your organization yet'
-                    }
-                  </p>
-                </div>
+                  }
+                  action={currentUser?.role === 'project-manager' ? {
+                    label: 'Create User',
+                    onClick: () => setIsCreateModalOpen(true),
+                    icon: Plus
+                  } : undefined}
+                />
               )}
             </div>
           </div>
@@ -459,12 +481,15 @@ export default function UsersPage() {
           />
 
           {/* Create User Modal */}
-          <CreateUserModal
-            isOpen={isCreateModalOpen}
-            onClose={() => setIsCreateModalOpen(false)}
-            onSuccess={loadData}
-          />
-        </DashboardLayout>
-      </ProtectedRoute>
-    );
+          <Suspense fallback={<LoadingSpinner />}>
+            <CreateUserModal
+              isOpen={isCreateModalOpen}
+              onClose={() => setIsCreateModalOpen(false)}
+              onSuccess={loadData}
+            />
+          </Suspense>
+        </PageErrorBoundary>
+      </DashboardLayout>
+    </ProtectedRoute>
+  );
 }
