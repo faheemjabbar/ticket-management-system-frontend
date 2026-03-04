@@ -1,3 +1,5 @@
+import type { OrganizationRef } from './organization.types';
+
 export enum UserRole {
   ADMIN = 'admin',  // System administrator
   PROJECT_MANAGER = 'project-manager',  // Project manager (with hyphen to match backend)
@@ -5,18 +7,12 @@ export enum UserRole {
   QA = 'qa'
 }
 
-export interface Organization {
-  id: string;
-  name: string;
-  isActive?: boolean;
-}
-
 export interface User {
   id: string;
   name: string;
   email: string;
   role: 'admin' | 'project-manager' | 'developer' | 'qa';
-  organization?: Organization | null;  // UPDATED - now an object with id and name
+  organization?: OrganizationRef | null;  // UPDATED - now an object with id and name
   createdBy?: string;
   avatar?: string;
   projects?: string[];

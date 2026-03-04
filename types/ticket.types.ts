@@ -1,3 +1,5 @@
+import type { Label } from './label.types';
+
 // New Status Enum (Phase 1)
 export enum TicketStatus {
   BACKLOG = 'backlog',
@@ -175,12 +177,6 @@ export interface WatcherUser {
   name: string;
   email: string;
   avatar?: string;
-}
-
-export interface Label {
-  id: string;
-  name: string;
-  color: string;
 }
 
 export interface CreateTicketDto {

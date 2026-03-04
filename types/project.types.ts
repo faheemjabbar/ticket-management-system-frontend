@@ -1,12 +1,9 @@
+import type { OrganizationRef } from './organization.types';
+
 export enum ProjectStatus {
   ACTIVE = 'active',
   COMPLETED = 'completed',
   ARCHIVED = 'archived'
-}
-
-export interface Organization {
-  id: string;
-  name: string;
 }
 
 export interface Project {
@@ -14,7 +11,7 @@ export interface Project {
   name: string;
   description: string;
   status: 'active' | 'completed' | 'archived';
-  organization: Organization;  // UPDATED - now an object with id and name
+  organization: OrganizationRef;  // UPDATED - now an object with id and name
   createdBy: string;
   teamMembers: TeamMember[];
   startDate: string;
