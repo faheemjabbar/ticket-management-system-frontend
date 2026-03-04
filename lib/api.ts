@@ -209,13 +209,19 @@ export const ticketAPI = {
 
   // Create ticket (Project Manager/QA only)
   create: async (data: CreateTicketDto): Promise<Ticket> => {
-    // Apply defaults for Phase 1 fields
+    // Only send fields that backend expects
     const ticketData = {
-      ...data,
-      type: data.type || 'task',
-      status: data.status || 'backlog',
-      priorityScore: data.priorityScore || 1000,
-      acceptanceCriteria: data.acceptanceCriteria || [],
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      projectId: data.projectId,
+      labels: data.labels || [],
+      assignedToId: data.assignedToId,
+      deadline: data.deadline,
+      storyPoints: data.storyPoints,
+      estimatedHours: data.estimatedHours,
+      sprintId: data.sprintId,
+      parentId: data.parentId,
     };
     const response = await axiosInstance.post('/api/tickets', ticketData);
     return response.data;

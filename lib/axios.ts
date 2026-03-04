@@ -88,7 +88,15 @@ axiosInstance.interceptors.response.use(
           break;
           
         case 404:
-          // Not found
+          // Not found - provide more context in development
+          const isDev = process.env.NODE_ENV === 'development';
+          if (isDev && error.config?.url) {
+            console.error('API 404 Error:', {
+              url: error.config.url,
+              baseURL: error.config.baseURL,
+              fullURL: `${error.config.baseURL}${error.config.url}`,
+            });
+          }
           toast.error(data?.message || 'Resource not found');
           break;
           

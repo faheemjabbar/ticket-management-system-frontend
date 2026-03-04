@@ -58,6 +58,10 @@ npm run build
 npm start
 ```
 
+## Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for production deployment instructions and troubleshooting.
+
 ## License
 
 MIT

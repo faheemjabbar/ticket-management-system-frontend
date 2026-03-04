@@ -197,15 +197,12 @@ export default function TicketForm({ mode, initialData, ticketId }: TicketFormPr
         const ticketData = {
           title: formData.title.trim(),
           description: formData.description.trim(),
-          type: formData.type,
-          status: formData.status,
           priority: formData.priority,
           projectId: formData.projectId,
           labels: formData.labels,
           deadline: formData.deadline || undefined,
           storyPoints: formData.storyPoints,
           estimatedHours: formData.estimatedHours,
-          acceptanceCriteria: formData.acceptanceCriteria,
           sprintId: formData.sprintId || undefined,
           parentId: formData.parentId || undefined,
         };
@@ -238,14 +235,11 @@ export default function TicketForm({ mode, initialData, ticketId }: TicketFormPr
         const updateData = {
           title: formData.title.trim(),
           description: formData.description.trim(),
-          type: formData.type,
-          status: formData.status,
           priority: formData.priority,
           labels: formData.labels,
           deadline: formData.deadline || undefined,
           storyPoints: formData.storyPoints,
           estimatedHours: formData.estimatedHours,
-          acceptanceCriteria: formData.acceptanceCriteria,
           sprintId: formData.sprintId || undefined,
           parentId: formData.parentId || undefined,
         };
@@ -366,6 +360,11 @@ export default function TicketForm({ mode, initialData, ticketId }: TicketFormPr
             onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
             className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
           >
+            {Object.entries(TYPE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </select>
         </div>
 
