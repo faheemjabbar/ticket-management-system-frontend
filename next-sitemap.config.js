@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: 'https://tickflo.com',
+  siteUrl: 'https://tickflo.netlify.app',
   generateRobotsTxt: true,
   generateIndexSitemap: false,
   exclude: [
@@ -46,7 +46,7 @@ module.exports = {
         ],
       },
     ],
-    additionalSitemaps: ['https://tickflo.com/sitemap.xml'],
+    additionalSitemaps: ['https://tickflo.netlify.app/sitemap.xml'],
   },
   // Priority per path
   transform: async (config, path) => {

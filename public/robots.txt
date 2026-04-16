@@ -16,7 +16,7 @@ Disallow: /users
 Disallow: /api/
 
 # Host
-Host: https://tickflo.com
+Host: https://tickflo.netlify.app
 
 # Sitemaps
-Sitemap: https://tickflo.com/sitemap.xml
+Sitemap: https://tickflo.netlify.app/sitemap.xml
