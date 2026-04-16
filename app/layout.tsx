@@ -54,6 +54,9 @@ export const metadata: Metadata = {
       "Lightweight ticket management for startups and small teams. Try free for 7 days.",
     images: ["/inbox_overview_page.png"],
   },
+  verification: {
+    google: "KZGtXiiztaOH2T992_ADTCNzRb3wzIMycrsVd1b9wbs",
+  },
   robots: {
     index: true,
     follow: true,
