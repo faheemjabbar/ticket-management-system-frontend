@@ -1,0 +1,22 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /tickets/
+Disallow: /settings
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /organizations
+Disallow: /projects
+Disallow: /sprints
+Disallow: /labels
+Disallow: /users
+Disallow: /api/
+
+# Host
+Host: https://tickflo.com
+
+# Sitemaps
+Sitemap: https://tickflo.com/sitemap.xml

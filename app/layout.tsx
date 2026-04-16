@@ -12,8 +12,59 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "TickFlo - Ticket Management System",
-  description: "Manage your tickets efficiently with TickFlo",
+  metadataBase: new URL("https://tickflo.com"),
+  title: {
+    default: "TickFlo — Simple Help Desk & Ticket Management System",
+    template: "%s | TickFlo",
+  },
+  description:
+    "TickFlo is a lightweight ticket management system for startups and small teams. Manage support tickets, track issues, and resolve faster. Try free for 7 days.",
+  keywords: [
+    "ticket management system",
+    "help desk software",
+    "ticketing system",
+    "support ticket software",
+    "help desk for startups",
+    "simple ticket system",
+    "TickFlo",
+  ],
+  authors: [{ name: "TickFlo" }],
+  creator: "TickFlo",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://tickflo.com",
+    siteName: "TickFlo",
+    title: "TickFlo — Simple Help Desk & Ticket Management System",
+    description:
+      "Lightweight ticket management for startups and small teams. Try free for 7 days — no credit card required.",
+    images: [
+      {
+        url: "/inbox_overview_page.png",
+        width: 1200,
+        height: 630,
+        alt: "TickFlo help desk dashboard",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TickFlo — Simple Help Desk & Ticket Management System",
+    description:
+      "Lightweight ticket management for startups and small teams. Try free for 7 days.",
+    images: ["/inbox_overview_page.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({

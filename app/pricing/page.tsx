@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CheckCircle2, X, Zap, Building2, Users, Mail } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Pricing | TickFlo - Help Desk & Ticket Management Plans",
+  title: "Pricing — Help Desk & Ticket Management Plans",
   description:
     "Simple, transparent pricing for TickFlo's ticket management system. Start with a free 1-week trial — no credit card required. Find the right help desk plan for your team.",
   keywords: [
@@ -19,6 +19,45 @@ export const metadata: Metadata = {
       "Try TickFlo's ticket system free for 7 days. No credit card needed. Upgrade to the plan that fits your team.",
     type: "website",
   },
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "How does the 1-week free trial work?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Sign up and get full access to your chosen plan for 7 days — no credit card required. At the end of the trial you can subscribe or your account pauses automatically.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can I switch plans later?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. You can upgrade or downgrade your ticket management plan at any time from your account settings. Changes take effect immediately.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What counts as a ticket?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Any support request submitted through the TickFlo ticket system counts as one ticket, regardless of how many replies it has.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is there a setup fee?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "None. Your help desk is ready to go the moment you sign up. No onboarding fees, no hidden costs.",
+      },
+    },
+  ],
 };
 
 // --- Types ---
@@ -207,6 +246,10 @@ const PlanCard: React.FC<{ plan: Plan }> = ({ plan }) => (
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
 
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm w-full">

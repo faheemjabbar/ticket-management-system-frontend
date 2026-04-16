@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CheckCircle2, Users, Zap, Shield, HeadphonesIcon, TicketIcon, BarChart3, Mail } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "About Us | TickFlo - Help Desk & Ticket Management System",
+  title: "About Us — Help Desk & Ticket Management System",
   description:
     "TickFlo is a modern help desk and ticket management platform built to streamline support workflows. Learn how our ticket system empowers teams to resolve issues faster.",
   keywords: [

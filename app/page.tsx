@@ -3,9 +3,35 @@
 import React from 'react';
 import { CheckCircle2, Mail } from 'lucide-react';
 import Image from 'next/image';
+import Script from 'next/script';
 import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
 import { authAPI } from '@/lib/api';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'TickFlo',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  description:
+    'TickFlo is a lightweight help desk and ticket management system for startups and small teams.',
+  url: 'https://tickflo.com',
+  offers: {
+    '@type': 'Offer',
+    price: '19',
+    priceCurrency: 'USD',
+    description: '7-day free trial, no credit card required',
+  },
+  featureList: [
+    'Ticket management',
+    'Help desk dashboard',
+    'File attachments',
+    'Sprint integration',
+    'Analytics',
+    'Role-based access',
+  ],
+};
 
 // --- Sub-Components ---
 
@@ -93,6 +119,11 @@ export default function TickFloLanding() {
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
+      <Script
+        id="tickflo-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm w-full">
         <div className="flex items-center justify-between px-8 py-4 max-w-7xl mx-auto">
@@ -102,9 +133,10 @@ export default function TickFloLanding() {
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium text-gray-600">
             <button onClick={handleSignInClick} className="hover:text-orange-600 transition-colors">Sign in</button>
-            <a onClick={()=>router.push('/about-us')} className="hover:text-orange-600 transition-colors">About</a>
-            <a onClick={scrollToFooterCTA} className="hover:text-orange-600 transition-colors">Contact</a>
-            <a onClick={()=>router.push('/pricing')} className="hover:text-orange-600 transition-colors">Pricing</a>
+            <a onClick={()=>router.push('/about-us')} className="hover:text-orange-600 transition-colors cursor-pointer">About</a>
+            <a onClick={()=>router.push('/pricing')} className="hover:text-orange-600 transition-colors cursor-pointer">Pricing</a>
+            <a onClick={()=>router.push('/blog')} className="hover:text-orange-600 transition-colors cursor-pointer">Blog</a>
+            <a onClick={scrollToFooterCTA} className="hover:text-orange-600 transition-colors cursor-pointer">Contact</a>
           </div>
         </div>
       </nav>
@@ -114,15 +146,15 @@ export default function TickFloLanding() {
         <DottedBackground opacity="opacity-[0.15]" size="180px" />
         <div className="relative z-10 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-black mb-6 max-w-4xl mx-auto leading-tight">
-            Save time managing tickets <br />
-            <span className="text-orange-600">higher quality support</span>
+            The help desk built for <br />
+            <span className="text-orange-600">faster ticket management</span>
           </h1>
           <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto mb-12 leading-relaxed">
-            A dedicated platform for customers to submit tickets and get answers. While developers get insights to improve their products and services.
+            TickFlo is a simple ticket management system for startups and small teams. Submit, track, and resolve support tickets — all in one place. Try free for 7 days.
           </p>
           <div className="max-w-5xl mx-auto rounded-2xl overflow-hidden shadow-2xl border-8 border-white bg-white">
              <div className="relative aspect-[16/9]">
-              <Image src="/inbox_overview_page.png" alt="Dashboard" fill className="object-contain" priority />
+              <Image src="/inbox_overview_page.png" alt="TickFlo help desk dashboard — ticket management system overview" fill className="object-contain" priority />
              </div>
           </div>
         </div>
@@ -133,12 +165,12 @@ export default function TickFloLanding() {
         <DottedBackground opacity="opacity-[0.05]" size="250px" />
         <div className="max-w-6xl mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">See how you can use Tick<span className="text-orange-600">Flo</span></h2>
-            <p className="text-slate-400 text-lg max-w-3xl mx-auto">Information tailored for both sides of the support ticket.</p>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">How teams use Tick<span className="text-orange-600">Flo</span></h2>
+            <p className="text-slate-400 text-lg max-w-3xl mx-auto">A ticket system built for both sides of support — your team and your customers.</p>
           </div>
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <FeatureCard title="Developers" description="Spend time building and resolving issues efficiently." points={["Clear overview of all tickets", "Auto-assign tickets", "Detailed insights", "Advanced Analytics"]} buttonText="Read more" />
-            <FeatureCard title="Customers" description="Report issues easily and get timely responses." points={["Easy ticket submission", "Rich text support", "Image/File uploads", "Real-time tracking"]} buttonText="Read more" />
+            <FeatureCard title="For Developers" description="Spend time building, not chasing tickets. Your help desk, organized." points={["Clear overview of all tickets", "Auto-assign tickets", "Detailed insights", "Advanced Analytics"]} buttonText="Read more" />
+            <FeatureCard title="For Customers" description="Submit support tickets in seconds and track every update in real time." points={["Easy ticket submission", "Rich text support", "Image/File uploads", "Real-time tracking"]} buttonText="Read more" />
           </div>
         </div>
       </section>
@@ -187,7 +219,10 @@ export default function TickFloLanding() {
         <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="font-bold text-slate-900">© 2026 TickFlo</div>
           <div className="flex gap-8">
-            <a onClick={scrollToFooterCTA} className="hover:text-orange-600 transition-colors font-medium">Contact</a>
+            <a onClick={()=>router.push('/pricing')} className="hover:text-orange-600 transition-colors font-medium cursor-pointer">Pricing</a>
+            <a onClick={()=>router.push('/about-us')} className="hover:text-orange-600 transition-colors font-medium cursor-pointer">About Us</a>
+            <a onClick={()=>router.push('/blog')} className="hover:text-orange-600 transition-colors font-medium cursor-pointer">Blog</a>
+            <a onClick={scrollToFooterCTA} className="hover:text-orange-600 transition-colors font-medium cursor-pointer">Contact</a>
             <a href="#" className="hover:text-orange-600 transition-colors font-medium">Privacy policy</a>
           </div>
         </div>
