@@ -3,10 +3,13 @@ import BlogLayout from "@/components/blog/BlogLayout";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Zendesk vs Freshdesk vs TickFlo: Which Help Desk Is Right for Small Teams?",
+  title: "Zendesk vs Freshdesk for Small Teams — And a Cheaper Alternative",
   description:
-    "A no-fluff comparison of Zendesk, Freshdesk, and TickFlo. Pricing, features, and which help desk actually fits small teams and startups.",
-  keywords: ["Zendesk alternative for startups", "Freshdesk alternative small business", "help desk software comparison"],
+    "Zendesk starts at $55/agent. Freshdesk's free plan is too limited. Here's an honest comparison — and a simpler help desk built for startups.",
+  keywords: ["Zendesk alternative for startups", "Freshdesk alternative small business", "help desk software comparison", "cheap help desk software"],
+  alternates: {
+    canonical: "https://tickflo.netlify.app/blog/zendesk-vs-freshdesk-vs-tickflo",
+  },
   openGraph: {
     title: "Zendesk vs Freshdesk vs TickFlo — Help Desk Comparison",
     description: "Which help desk is right for your small team? We compare pricing, features, and ease of use.",

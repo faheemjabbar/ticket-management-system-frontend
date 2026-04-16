@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://tickflo.com"),
+  metadataBase: new URL("https://tickflo.netlify.app"),
   title: {
     default: "TickFlo — Simple Help Desk & Ticket Management System",
     template: "%s | TickFlo",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://tickflo.com",
+    url: "https://tickflo.netlify.app",
     siteName: "TickFlo",
     title: "TickFlo — Simple Help Desk & Ticket Management System",
     description:

@@ -3,13 +3,16 @@ import BlogLayout from "@/components/blog/BlogLayout";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "The Real Cost of Zendesk for Small Teams (And What to Use Instead)",
+  title: "Zendesk Costs $3,300/Year for 5 Agents — Here's What to Use Instead",
   description:
-    "Zendesk's pricing adds up fast for small teams. We break down the real numbers and show you a more affordable help desk alternative.",
-  keywords: ["affordable help desk software", "Zendesk alternative for startups", "Zendesk too expensive"],
+    "We did the math on Zendesk's real pricing for small teams. The numbers are ugly. Here's a leaner help desk alternative that costs 85% less.",
+  keywords: ["affordable help desk software", "Zendesk alternative for startups", "Zendesk too expensive", "Zendesk pricing small team"],
+  alternates: {
+    canonical: "https://tickflo.netlify.app/blog/real-cost-of-zendesk-for-small-teams",
+  },
   openGraph: {
-    title: "The Real Cost of Zendesk for Small Teams",
-    description: "Zendesk pricing breakdown and why small teams are switching to leaner alternatives.",
+    title: "Zendesk Costs $3,300/Year for 5 Agents — Here's What to Use Instead",
+    description: "We did the math on Zendesk's real pricing for small teams. Here's a leaner alternative.",
     type: "article",
   },
 };

@@ -25,9 +25,9 @@ const posts = [
   },
   {
     slug: "zendesk-vs-freshdesk-vs-tickflo",
-    title: "Zendesk vs Freshdesk vs TickFlo: Which Help Desk Is Right for Small Teams?",
+    title: "Zendesk vs Freshdesk for Small Teams — And a Cheaper Alternative",
     description:
-      "A no-fluff comparison of the top help desk tools — pricing, features, and who each one is actually built for.",
+      "Zendesk starts at $55/agent. Freshdesk's free plan is too limited. An honest comparison with a simpler option.",
     date: "April 11, 2026",
     readTime: "7 min read",
     tag: "Comparison",
@@ -79,9 +79,9 @@ const posts = [
   },
   {
     slug: "real-cost-of-zendesk-for-small-teams",
-    title: "The Real Cost of Zendesk for Small Teams (And What to Use Instead)",
+    title: "Zendesk Costs $3,300/Year for 5 Agents — Here's What to Use Instead",
     description:
-      "Zendesk's pricing adds up fast. We break down the real numbers and show you a leaner alternative.",
+      "We did the math on Zendesk's real pricing for small teams. The numbers are ugly.",
     date: "April 17, 2026",
     readTime: "5 min read",
     tag: "Comparison",
@@ -103,6 +103,51 @@ const posts = [
     date: "April 19, 2026",
     readTime: "5 min read",
     tag: "Best Practices",
+  },
+  {
+    slug: "best-help-desk-software-for-startups",
+    title: "5 Best Help Desk Software for Startups in 2026 (Ranked by Value)",
+    description:
+      "Ranked by value and ease of setup — not by enterprise feature count.",
+    date: "April 20, 2026",
+    readTime: "6 min read",
+    tag: "Buying Guide",
+  },
+  {
+    slug: "ticket-system-for-small-teams",
+    title: "The Best Ticket System for Small Teams (Under 20 People)",
+    description:
+      "Fast setup, low cost, no enterprise bloat. Here's what small teams actually need.",
+    date: "April 21, 2026",
+    readTime: "5 min read",
+    tag: "Buying Guide",
+  },
+  {
+    slug: "freshdesk-alternatives-for-small-business",
+    title: "4 Freshdesk Alternatives for Small Business (Simpler & Cheaper)",
+    description:
+      "Freshdesk's free plan is too limited and paid plans get expensive fast. Here's what to use instead.",
+    date: "April 22, 2026",
+    readTime: "5 min read",
+    tag: "Comparison",
+  },
+  {
+    slug: "how-to-reduce-support-ticket-response-time",
+    title: "How to Reduce Support Ticket Response Time (7 Practical Tips)",
+    description:
+      "Cut your average response time without hiring more agents.",
+    date: "April 23, 2026",
+    readTime: "5 min read",
+    tag: "Tips",
+  },
+  {
+    slug: "help-desk-software-without-per-seat-pricing",
+    title: "Help Desk Software Without Per-Seat Pricing (Flat Rate Options)",
+    description:
+      "Flat-rate help desk tools that don't punish you for growing your team.",
+    date: "April 24, 2026",
+    readTime: "4 min read",
+    tag: "Buying Guide",
   },
 ];
 
