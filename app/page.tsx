@@ -86,18 +86,9 @@ export default function TickFloLanding() {
   }
 
   const handleSignInClick = async () => {
-    try {
-      // Check if admin exists via API
-      const { exists } = await authAPI.checkAdminExists();
-      if (exists) {
-        router.push("/login");
-      } else {
-        router.push("/register");
-      }
-    } catch {
-      // If API call fails, default to login
+
+
       router.push("/login");
-    }
   }
 
   return (
@@ -111,8 +102,9 @@ export default function TickFloLanding() {
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium text-gray-600">
             <button onClick={handleSignInClick} className="hover:text-orange-600 transition-colors">Sign in</button>
-            <a onClick={scrollToFeature} className="hover:text-orange-600 transition-colors">About</a>
-            <a onClick={scrollToFooterCTA} className="hover:text-orange-600 transition-colors">Contact Us</a>
+            <a onClick={()=>router.push('/about-us')} className="hover:text-orange-600 transition-colors">About</a>
+            <a onClick={scrollToFooterCTA} className="hover:text-orange-600 transition-colors">Contact</a>
+            <a onClick={()=>router.push('/pricing')} className="hover:text-orange-600 transition-colors">Pricing</a>
           </div>
         </div>
       </nav>
