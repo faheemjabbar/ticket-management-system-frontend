@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
   // This middleware is mainly for redirecting logged-in users away from auth pages
 
   // Define public routes (accessible without authentication)
-  const publicRoutes = ['/', '/login', '/register'];
+  const publicRoutes = ['/', '/login', '/register', '/about-us', '/pricing', '/blog'];
   
   // Define protected routes (require authentication)
   const protectedRoutes = [
@@ -25,8 +25,8 @@ export function middleware(request: NextRequest) {
     '/reset-password'
   ];
 
-  // Check if current path is a public route
-  const isPublicRoute = publicRoutes.some(route => pathname === route);
+  // Check if current path is a public route (exact match or blog sub-paths)
+  const isPublicRoute = publicRoutes.some(route => pathname === route) || pathname.startsWith('/blog');
   
   // Check if current path is a protected route
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));

@@ -46,7 +46,6 @@ module.exports = {
         ],
       },
     ],
-    additionalSitemaps: ['https://tickflo.netlify.app/sitemap.xml'],
   },
   // Priority per path
   transform: async (config, path) => {
