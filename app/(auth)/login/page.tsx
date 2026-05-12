@@ -215,12 +215,7 @@ const LoginPage = () => {
             </p>
           </form>
 
-          {/* Footer Branding */}
-          <div className="mt-16 text-center lg:absolute lg:bottom-6 lg:left-0 lg:w-full">
-            <p className="text-slate-400 text-xs font-medium">
-              © 2026 TickFlo. Secure Admin Access.
-            </p>
-          </div>
+
         </div>
       </div>
     </div>
