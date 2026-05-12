@@ -16,19 +16,18 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (loading) return;
+
+    if (!isAuthenticated) {
       setIsRedirecting(true);
-      router.push('/login');
+      router.replace('/login');
       return;
     }
 
-    // Check if user's organization is inactive (only for non-admin users)
-    if (!loading && isAuthenticated && user) {
-      if (user.role !== 'admin' && user.organization && user.organization.isActive === false) {
-        setIsRedirecting(true);
-        toast.error('Your organization has been deactivated. Please contact support.');
-        logout();
-      }
+    if (user && user.role !== 'admin' && user.organization && user.organization.isActive === false) {
+      setIsRedirecting(true);
+      toast.error('Your organization has been deactivated. Please contact support.');
+      logout();
     }
   }, [isAuthenticated, loading, user, router, logout]);
 

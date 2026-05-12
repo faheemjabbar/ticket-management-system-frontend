@@ -48,12 +48,12 @@ interface DashboardTicket {
   labelObjects?: { id: string; name: string; color: string }[];
   project: string;
   projectName: string;
-  status: string;
+  status: TicketStatus;
   assignedToId?: string;
   assignedToName?: string;
 }
 
-const DASHBOARD_STATUSES = [
+const DASHBOARD_STATUSES: readonly TicketStatus[] = [
   TicketStatus.BACKLOG,
   TicketStatus.TODO,
   TicketStatus.IN_PROGRESS,
@@ -62,19 +62,23 @@ const DASHBOARD_STATUSES = [
   TicketStatus.DONE,
   TicketStatus.CLOSED,
   TicketStatus.BLOCKED,
-] as const;
+];
 
-const DEFAULT_VISIBLE_COUNTS: Record<string, number> = DASHBOARD_STATUSES.reduce((acc, status) => {
+const DEFAULT_VISIBLE_COUNTS: Record<TicketStatus, number> = DASHBOARD_STATUSES.reduce((acc, status) => {
   acc[status] = UI_CONSTANTS.INITIAL_VISIBLE_TICKETS;
   return acc;
-}, {} as Record<string, number>);
+}, {} as Record<TicketStatus, number>);
+
+function isTicketStatus(value: unknown): value is TicketStatus {
+  return typeof value === 'string' && DASHBOARD_STATUSES.includes(value as TicketStatus);
+}
 
 // Droppable Column Component
 function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id });
   
   return (
-    <div ref={setNodeRef} className="space-y-2 min-h-[200px]">
+    <div ref={setNodeRef} className="space-y-2 min-h-50">
       {children}
     </div>
   );
@@ -216,7 +220,7 @@ function convertToDashboardTicket(apiTicket: APITicket): DashboardTicket {
     labelObjects: apiTicket.labelObjects,
     project: apiTicket.projectId,
     projectName: apiTicket.projectName,
-    status: apiTicket.status,
+    status: apiTicket.status as TicketStatus,
     assignedToId: apiTicket.assignedToId,
     assignedToName: apiTicket.assignedToName,
   };
@@ -349,10 +353,9 @@ export default function DashboardPage() {
     }
 
     const activeTicket = tickets.find(t => t.id === active.id);
-    const overColumn = over.id as string;
+    const overColumn = over.id;
 
-    const validStatuses = DASHBOARD_STATUSES;
-    if (!validStatuses.includes(overColumn as TicketStatus)) {
+    if (!isTicketStatus(overColumn)) {
       return;
     }
 
@@ -424,7 +427,7 @@ export default function DashboardPage() {
 
   // Group tickets by status (Phase 1: Updated statuses)
   const ticketsByStatus = useMemo(() => {
-    const grouped: Record<string, DashboardTicket[]> = {
+    const grouped: Record<TicketStatus, DashboardTicket[]> = {
       backlog: [],
       todo: [],
       in_progress: [],
@@ -433,6 +436,7 @@ export default function DashboardPage() {
       done: [],
       closed: [],
       blocked: [],
+      [TicketStatus.REJECTED]: []
     };
 
     filteredTickets.forEach(ticket => {
@@ -637,7 +641,6 @@ export default function DashboardPage() {
                               onCommentClick={() => handleCommentClick(ticket.id)}
                               onSelfAssign={handleSelfAssign}
                               isDeveloper={user?.role === 'developer'}
-                              isPending={column.id === 'backlog' || column.id === 'todo'}
                             />
                           ))}
                           

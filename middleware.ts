@@ -4,14 +4,13 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get token from localStorage (we'll check this on client side)
-  // Note: We can't access localStorage in middleware, so we'll handle auth on client
-  // This middleware is mainly for redirecting logged-in users away from auth pages
+  // Middleware cannot read localStorage/sessionStorage in Next.js.
+  // Auth checks and redirects are handled on the client side using AuthProvider/ProtectedRoute.
 
   // Define public routes (accessible without authentication)
-  const publicRoutes = ['/', '/login', '/register', '/about-us', '/pricing', '/blog'];
+  const publicRoutes = ['/', '/login', '/register', '/about-us', '/pricing', '/blog', '/forgot-password', '/reset-password'];
   
-  // Define protected routes (require authentication)
+  // Define protected routes (authenticated pages)
   const protectedRoutes = [
     '/dashboard', 
     '/tickets', 
@@ -21,8 +20,6 @@ export function middleware(request: NextRequest) {
     '/sprints',
     '/labels',
     '/settings',
-    '/forgot-password',
-    '/reset-password'
   ];
 
   // Check if current path is a public route (exact match or blog sub-paths)

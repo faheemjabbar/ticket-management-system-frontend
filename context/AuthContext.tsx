@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation';
 import axiosInstance, { setLoggingOut } from '@/lib/axios';
 import { toast } from 'react-hot-toast';
 import { User } from '@/types/user.types';
-import { clearAuthData, getStoredUser, isTokenExpired, storeAuthData } from '@/lib/auth-utils';
+import { clearAuthData, getStoredUser, getToken, isTokenExpired, storeAuthData, updateStoredUser } from '@/lib/auth-utils';
 
 // Auth context type
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => void;
   updateUser: (updatedUser: Partial<User>) => void;
   isAuthenticated: boolean;
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         const storedUser = getStoredUser();
-        const token = localStorage.getItem('token');
+        const token = getToken();
 
         if (token && storedUser && !isTokenExpired(token)) {
           setUser(storedUser);
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Login function
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe = true) => {
     try {
       const res = await axiosInstance.post('/auth/login', {
         email,
@@ -65,13 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const { access_token: token, user } = res.data;
 
-      // Check if user's organization is inactive (only for non-admin users)
       if (user.role !== 'admin' && user.organization && !user.organization.isActive) {
         toast.error('Your organization has been deactivated. Please contact support.');
         return;
       }
 
-      storeAuthData(token, user);
+      storeAuthData(token, user, !rememberMe);
       setUser(user);
 
       toast.success('Login successful!');
@@ -93,10 +92,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Update user function
   const updateUser = (updatedUser: Partial<User>) => {
     if (!user) return;
-    
+
     const newUser = { ...user, ...updatedUser };
     setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    updateStoredUser(newUser);
   };
 
   // Check if user has specific role(s)

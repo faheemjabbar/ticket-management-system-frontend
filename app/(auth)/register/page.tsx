@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema } from '@/schemas/auth';
 import { authAPI } from '@/lib/api';
+import { storeAuthData } from '@/lib/auth-utils';
 import { z } from 'zod';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
@@ -34,9 +35,7 @@ const RegisterPage = () => {
         password: data.password,
       });
 
-      localStorage.setItem('token', response.access_token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      
+      storeAuthData(response.access_token, response.user);
       toast.success('Admin account created successfully!');
       router.push('/organizations');
     } catch (err: any) {

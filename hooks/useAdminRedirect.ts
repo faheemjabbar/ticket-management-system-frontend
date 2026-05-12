@@ -13,7 +13,7 @@ export function useAdminRedirect() {
 
   useEffect(() => {
     if (user && user.role === UserRole.ADMIN) {
-      router.push('/organizations');
+      router.replace('/organizations');
     }
   }, [user, router]);
 

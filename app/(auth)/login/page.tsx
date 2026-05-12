@@ -12,6 +12,7 @@ import DottedBackground from '@/components/ui/DottedBackground';
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showDemoDropdown, setShowDemoDropdown] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const { login } = useAuth();
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue } = useForm<LoginFormInputs>({
@@ -20,7 +21,7 @@ const LoginPage = () => {
 
   const onSubmit = async (data: LoginFormInputs) => {
     try {
-      await login(data.email, data.password);
+      await login(data.email, data.password, rememberMe);
     } catch (err: any) {
       // Error already handled by AuthContext and axios interceptor
     }
@@ -140,6 +141,8 @@ const LoginPage = () => {
               <input 
                 type="checkbox" 
                 id="remember"
+                checked={rememberMe}
+                onChange={(event) => setRememberMe(event.target.checked)}
                 className="w-5 h-5 accent-orange-600 rounded-md border-slate-300 focus:ring-orange-500 cursor-pointer" 
               />
               <label htmlFor="remember" className="text-sm font-medium text-slate-600 cursor-pointer select-none">

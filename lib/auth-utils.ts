@@ -4,24 +4,41 @@
  */
 
 /**
+ * Auth utility functions
+ * Helper functions for authentication-related operations
+ */
+
+/**
  * Guard for browser-only storage access
  */
 const isBrowser = typeof window !== 'undefined';
 
-/**
- * Get token from localStorage
- */
-export const getToken = (): string | null => {
+const getStorage = (useSessionStorage = false): Storage | null => {
   if (!isBrowser) return null;
-  return window.localStorage.getItem('token');
+  return useSessionStorage ? window.sessionStorage : window.localStorage;
+};
+
+const getAuthStorage = (): Storage | null => {
+  if (!isBrowser) return null;
+  if (window.localStorage.getItem('token') || window.localStorage.getItem('user')) return window.localStorage;
+  if (window.sessionStorage.getItem('token') || window.sessionStorage.getItem('user')) return window.sessionStorage;
+  return null;
 };
 
 /**
- * Get user from localStorage
+ * Get token from storage
+ */
+export const getToken = (): string | null => {
+  if (!isBrowser) return null;
+  return window.localStorage.getItem('token') || window.sessionStorage.getItem('token');
+};
+
+/**
+ * Get user from storage
  */
 export const getStoredUser = () => {
   if (!isBrowser) return null;
-  const userStr = window.localStorage.getItem('user');
+  const userStr = window.localStorage.getItem('user') || window.sessionStorage.getItem('user');
   if (!userStr) return null;
 
   try {
@@ -39,21 +56,33 @@ export const isAuthenticated = (): boolean => {
 };
 
 /**
- * Clear all auth data from localStorage
+ * Clear all auth data from storage
  */
 export const clearAuthData = (): void => {
   if (!isBrowser) return;
   window.localStorage.removeItem('token');
   window.localStorage.removeItem('user');
+  window.sessionStorage.removeItem('token');
+  window.sessionStorage.removeItem('user');
 };
 
 /**
- * Store auth data in localStorage
+ * Store auth data in storage
  */
-export const storeAuthData = (token: string, user: any): void => {
+export const storeAuthData = (token: string, user: any, useSessionStorage = false): void => {
   if (!isBrowser) return;
-  window.localStorage.setItem('token', token);
-  window.localStorage.setItem('user', JSON.stringify(user));
+
+  const storage = getStorage(useSessionStorage);
+  if (!storage) return;
+
+  storage.setItem('token', token);
+  storage.setItem('user', JSON.stringify(user));
+};
+
+export const updateStoredUser = (user: any): void => {
+  const storage = getAuthStorage();
+  if (!storage) return;
+  storage.setItem('user', JSON.stringify(user));
 };
 
 /**
