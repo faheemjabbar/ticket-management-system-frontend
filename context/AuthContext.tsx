@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import axiosInstance, { setLoggingOut } from '@/lib/axios';
 import { toast } from 'react-hot-toast';
 import { User } from '@/types/user.types';
-import { isTokenExpired } from '@/lib/auth-utils';
+import { clearAuthData, getStoredUser, isTokenExpired, storeAuthData } from '@/lib/auth-utils';
 
 // Auth context type
 interface AuthContextType {
@@ -23,34 +23,37 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Auth provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Initialize user state directly from localStorage (synchronous)
-  const getInitialUser = (): User | null => {
-    if (typeof window === 'undefined') return null;
-    
-    try {
-      const token = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
-      
-      if (token && storedUser) {
-        // Check if token is expired
-        if (isTokenExpired(token)) {
-          // Clear expired session
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          return null;
-        }
-        return JSON.parse(storedUser);
-      }
-    } catch (error) {
-      // Silent error handling
-      console.error('Failed to parse stored user:', error);
-    }
-    return null;
-  };
-
-  const [user, setUser] = useState<User | null>(getInitialUser());
-  const [loading, setLoading] = useState(false); // No loading needed for localStorage
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const initAuth = () => {
+      setLoading(true);
+
+      try {
+        const storedUser = getStoredUser();
+        const token = localStorage.getItem('token');
+
+        if (token && storedUser && !isTokenExpired(token)) {
+          setUser(storedUser);
+        } else {
+          clearAuthData();
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Failed to initialize auth state:', error);
+        clearAuthData();
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
+  }, []);
 
   // Login function
   const login = async (email: string, password: string) => {
@@ -68,46 +71,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Store token and user in localStorage (now includes organizationId)
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-
-      // Update state
+      storeAuthData(token, user);
       setUser(user);
 
-      // Show success message
       toast.success('Login successful!');
-
-      // Redirect to dashboard
       router.push('/dashboard');
     } catch (error: any) {
-      // Error already handled by axios interceptor
       throw error;
     }
   };
 
   // Logout function
   const logout = () => {
-    // Set flag to prevent error toasts
     setLoggingOut(true);
-    
-    // Clear localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-
-    // Clear state
+    clearAuthData();
     setUser(null);
-
-    // Show message
     toast.success('Logged out successfully');
-
-    // Redirect to login
     router.push('/login');
-    
-    // Reset flag after navigation
-    setTimeout(() => {
-      setLoggingOut(false);
-    }, 500);
   };
 
   // Update user function

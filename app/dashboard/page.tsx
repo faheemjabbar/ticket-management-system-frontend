@@ -5,7 +5,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/types/user.types';
-import { canTransitionTo } from '@/types/ticket.types';
+import { TicketStatus, canTransitionTo, STATUS_LABELS } from '@/types/ticket.types';
 import { Search, ChevronDown } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -49,7 +49,25 @@ interface DashboardTicket {
   project: string;
   projectName: string;
   status: string;
+  assignedToId?: string;
+  assignedToName?: string;
 }
+
+const DASHBOARD_STATUSES = [
+  TicketStatus.BACKLOG,
+  TicketStatus.TODO,
+  TicketStatus.IN_PROGRESS,
+  TicketStatus.IN_REVIEW,
+  TicketStatus.QA_TESTING,
+  TicketStatus.DONE,
+  TicketStatus.CLOSED,
+  TicketStatus.BLOCKED,
+] as const;
+
+const DEFAULT_VISIBLE_COUNTS: Record<string, number> = DASHBOARD_STATUSES.reduce((acc, status) => {
+  acc[status] = UI_CONSTANTS.INITIAL_VISIBLE_TICKETS;
+  return acc;
+}, {} as Record<string, number>);
 
 // Droppable Column Component
 function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
@@ -63,14 +81,15 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
 }
 
 // Sortable Ticket Card Component
-function SortableTicketCard({ ticket, onClick, onCommentClick, onSelfAssign, isDeveloper, isPending }: {
+function SortableTicketCard({ ticket, onClick, onCommentClick, onSelfAssign, isDeveloper }: {
   ticket: DashboardTicket;
   onClick: () => void;
   onCommentClick: () => void;
   onSelfAssign: (ticketId: string) => void;
   isDeveloper: boolean;
-  isPending: boolean;
 }) {
+  const showAssignButton = isDeveloper && !ticket.assignedToId &&
+    (ticket.status === TicketStatus.BACKLOG || ticket.status === TicketStatus.TODO);
   const {
     attributes,
     listeners,
@@ -134,8 +153,8 @@ function SortableTicketCard({ ticket, onClick, onCommentClick, onSelfAssign, isD
         <span className="font-medium">Created by {ticket.author.toUpperCase()}</span>
         <div className="flex items-center gap-1">
           <span>{ticket.time}</span>
-          {isDeveloper && isPending ? (
-            <button 
+          {showAssignButton ? (
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 onSelfAssign(ticket.id);
@@ -145,7 +164,7 @@ function SortableTicketCard({ ticket, onClick, onCommentClick, onSelfAssign, isD
               Assign yourself
             </button>
           ) : (
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 onCommentClick();
@@ -198,6 +217,8 @@ function convertToDashboardTicket(apiTicket: APITicket): DashboardTicket {
     project: apiTicket.projectId,
     projectName: apiTicket.projectName,
     status: apiTicket.status,
+    assignedToId: apiTicket.assignedToId,
+    assignedToName: apiTicket.assignedToName,
   };
 }
 
@@ -213,17 +234,10 @@ export default function DashboardPage() {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // State to track visible ticket count per column (increased initial limit)
-  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({
-    backlog: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
-    todo: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
-    in_progress: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
-    in_review: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
-    qa_testing: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
-    done: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
-    closed: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
-    blocked: UI_CONSTANTS.INITIAL_VISIBLE_TICKETS,
-  });
+  // State to track visible ticket count per column
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>(() => ({
+    ...DEFAULT_VISIBLE_COUNTS,
+  }));
 
   // State for project filter
   const [selectedProject, setSelectedProject] = useState('all');
@@ -231,6 +245,8 @@ export default function DashboardPage() {
   
   // State for search
   const [searchQuery, setSearchQuery] = useState('');
+
+  const canFilterByProject = !!user && (user.role === UserRole.QA || user.role === UserRole.PROJECT_MANAGER);
 
   // Load data on component mount
   useEffect(() => {
@@ -273,22 +289,22 @@ export default function DashboardPage() {
         setTickets(dashboardTickets);
 
         // Load projects only for QA and Project Manager
-        if (user && (user.role === UserRole.QA || user.role === UserRole.PROJECT_MANAGER)) {
+        if (canFilterByProject) {
           const projectsResponse = await projectAPI.getAll({ limit: API_CONSTANTS.DEFAULT_PAGE_SIZE });
           const projectsWithAll = [
-            { 
-              id: 'all', 
-              name: 'All Projects', 
-              description: '', 
-              status: 'active' as const, 
-              organization: { id: '', name: '' },  // UPDATED
-              createdBy: '', 
-              teamMembers: [], 
-              startDate: '', 
-              createdAt: '', 
-              updatedAt: '' 
+            {
+              id: 'all',
+              name: 'All Projects',
+              description: '',
+              status: 'active' as const,
+              organization: { id: '', name: '' },
+              createdBy: '',
+              teamMembers: [],
+              startDate: '',
+              createdAt: '',
+              updatedAt: '',
             },
-            ...projectsResponse.projects
+            ...projectsResponse.projects,
           ];
           setProjects(projectsWithAll);
         }
@@ -335,14 +351,12 @@ export default function DashboardPage() {
     const activeTicket = tickets.find(t => t.id === active.id);
     const overColumn = over.id as string;
 
-    // Validate that overColumn is a valid status (Phase 1: New statuses)
-    const validStatuses = ['backlog', 'todo', 'in_progress', 'in_review', 'qa_testing', 'done', 'closed', 'blocked'];
-    if (!validStatuses.includes(overColumn)) {
+    const validStatuses = DASHBOARD_STATUSES;
+    if (!validStatuses.includes(overColumn as TicketStatus)) {
       return;
     }
 
     if (activeTicket && activeTicket.status !== overColumn) {
-      // Phase 1: Validate status transition
       if (!canTransitionTo(activeTicket.status, overColumn)) {
         toast.error(`Cannot move ticket from ${formatStatus(activeTicket.status)} to ${formatStatus(overColumn)}`);
         return;
@@ -430,64 +444,48 @@ export default function DashboardPage() {
     return grouped;
   }, [filteredTickets]);
 
-  // Column definitions (Phase 1: New statuses)
-  const columns = [
-    { id: 'backlog', title: 'Backlog' },
-    { id: 'todo', title: 'To Do' },
-    { id: 'in_progress', title: 'In Progress' },
-    { id: 'in_review', title: 'In Review' },
-    { id: 'qa_testing', title: 'QA Testing' },
-    { id: 'done', title: 'Done' },
-    { id: 'closed', title: 'Closed' },
-    { id: 'blocked', title: 'Blocked' },
-  ];
+  // Column definitions
+  const columns = DASHBOARD_STATUSES.map((status) => ({
+    id: status,
+    title: STATUS_LABELS[status] || status,
+  }));
 
-  // Helper function to format status for display
   const formatStatus = (status: string): string => {
-    const statusMap: Record<string, string> = {
-      'backlog': 'Backlog',
-      'todo': 'To Do',
-      'in_progress': 'In Progress',
-      'in_review': 'In Review',
-      'qa_testing': 'QA Testing',
-      'done': 'Done',
-      'closed': 'Closed',
-      'blocked': 'Blocked',
-    };
-    return statusMap[status] || status;
+    return STATUS_LABELS[status] || status;
   };
 
   // Role-based column filtering (memoized to prevent recomputation on every render)
   const roleBasedColumns = useMemo(() => {
     if (user?.role === UserRole.DEVELOPER) {
-      // Developers see: backlog, todo, in_progress, in_review, done, closed
-      return columns.filter(col => !['qa_testing', 'blocked'].includes(col.id));
-    } else if (user?.role === UserRole.QA) {
-      // QA sees all columns
-      return columns;
+      return columns.filter(col => ![TicketStatus.QA_TESTING, TicketStatus.BLOCKED].includes(col.id as TicketStatus));
     }
-    // Project managers see all columns
+
     return columns;
-  }, [user?.role, columns]);
+  }, [user?.role]);
 
   // Handle self-assignment for developers
   const handleSelfAssign = async (ticketId: string) => {
     if (!user) return;
-    
+
     try {
-      await ticketAPI.assign(ticketId, {
+      const response = await ticketAPI.assign(ticketId, {
         assignedToId: user.id,
         assignedToName: user.name,
       });
-      
-      setTickets(prevTickets =>
-        prevTickets.map(ticket =>
+
+      setTickets((prevTickets) =>
+        prevTickets.map((ticket) =>
           ticket.id === ticketId
-            ? { ...ticket, status: 'assigned' }
+            ? {
+                ...ticket,
+                assignedToId: user.id,
+                assignedToName: user.name,
+              }
             : ticket
         )
       );
-      toast.success('Ticket assigned to you!');
+
+      toast.success(response?.assignedToName ? 'Ticket assigned to you!' : 'Assigned successfully');
     } catch {
       toast.error('Failed to assign ticket');
     }
@@ -561,8 +559,8 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex flex-col items-end gap-3">
-              {/* Project Filter Dropdown - Only for QA and Admin */}
-              {user && (user.role === UserRole.QA || user.role === UserRole.ADMIN) && (
+              {/* Project Filter Dropdown - Only for QA and Project Manager */}
+              {canFilterByProject && (
                 <div className="relative">
                   <button 
                     onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
@@ -587,17 +585,7 @@ export default function DashboardPage() {
                             onClick={() => {
                               setSelectedProject(project.id);
                               setIsProjectDropdownOpen(false);
-                              // Reset visible counts when changing project
-                              setVisibleCounts({
-                                backlog: 10,
-                                todo: 10,
-                                in_progress: 10,
-                                in_review: 10,
-                                qa_testing: 10,
-                                done: 10,
-                                closed: 10,
-                                blocked: 10,
-                              });
+                              setVisibleCounts({ ...DEFAULT_VISIBLE_COUNTS });
                             }}
                             className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg ${
                               selectedProject === project.id ? 'bg-orange-50 text-orange-600 font-medium' : 'text-gray-700'

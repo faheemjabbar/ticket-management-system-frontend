@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'react-hot-toast';
+import { clearAuthData, getToken } from '@/lib/auth-utils';
 
 // Flag to track if user is logging out
 let isLoggingOut = false;
@@ -21,14 +22,12 @@ const axiosInstance = axios.create({
 // Request interceptor - attach JWT token to every request
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get token from localStorage
-    const token = localStorage.getItem('token');
-    
-    // Attach token to Authorization header if it exists
+    const token = getToken();
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
   },
   (error: AxiosError) => {
@@ -38,59 +37,52 @@ axiosInstance.interceptors.request.use(
 
 // Response interceptor - handle errors globally
 axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error: AxiosError<{ message?: string }>) => {
-    // Don't show error toasts if user is logging out
     if (isLoggingOut) {
       return Promise.reject(error);
     }
 
-    // Handle different error status codes
     if (error.response) {
       const { status, data } = error.response;
-      
+      const isBrowser = typeof window !== 'undefined';
+
       switch (status) {
-        case 401:
-          // Check if user is on login/register page
-          const isAuthPage = typeof window !== 'undefined' && 
-            (window.location.pathname.includes('/login') || 
+        case 401: {
+          const isAuthPage = isBrowser &&
+            (window.location.pathname.includes('/login') ||
              window.location.pathname.includes('/register'));
-          
+
           if (isAuthPage) {
-            // On auth pages, show the actual error message from backend
             toast.error(data?.message || 'Invalid credentials');
           } else {
-            // On protected pages, it's a session expiry
             toast.error('Session expired. Please login again.');
-            
-            // Clear token and redirect to login
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
+            clearAuthData();
+            if (isBrowser) {
+              window.location.href = '/login';
+            }
           }
           break;
-          
-        case 403:
-          // Forbidden - check if it's organization deactivation
+        }
+
+        case 403: {
           const errorMessage = data?.message || '';
-          
-          if (errorMessage.toLowerCase().includes('organization') && 
+
+          if (errorMessage.toLowerCase().includes('organization') &&
               errorMessage.toLowerCase().includes('deactivated')) {
-            // Organization deactivated - clear session and redirect
             toast.error('Your organization has been deactivated. Please contact support.');
-            window.location.href = '/login';
+            clearAuthData();
+            if (isBrowser) {
+              window.location.href = '/login';
+            }
           } else {
-            // Other permission errors
             toast.error(data?.message || 'You do not have permission to perform this action');
           }
           break;
-          
-        case 404:
-          // Not found - provide more context in development
-          const isDev = process.env.NODE_ENV === 'development';
-          if (isDev && error.config?.url) {
+        }
+
+        case 404: {
+          if (process.env.NODE_ENV === 'development' && error.config?.url) {
             console.error('API 404 Error:', {
               url: error.config.url,
               baseURL: error.config.baseURL,
@@ -99,31 +91,27 @@ axiosInstance.interceptors.response.use(
           }
           toast.error(data?.message || 'Resource not found');
           break;
-          
+        }
+
         case 422:
-          // Validation error
           toast.error(data?.message || 'Validation error');
           break;
-          
+
         case 500:
         case 502:
         case 503:
-          // Server errors
           toast.error('Server error. Please try again later.');
           break;
-          
+
         default:
-          // Other errors - show backend message if available
           toast.error(data?.message || 'An error occurred');
       }
     } else if (error.request) {
-      // Request made but no response received
       toast.error('Cannot connect to server. Please check if backend is running.');
     } else {
-      // Something else happened
       toast.error('An unexpected error occurred');
     }
-    
+
     return Promise.reject(error);
   }
 );

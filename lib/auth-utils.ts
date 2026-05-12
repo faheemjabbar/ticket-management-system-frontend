@@ -4,21 +4,26 @@
  */
 
 /**
+ * Guard for browser-only storage access
+ */
+const isBrowser = typeof window !== 'undefined';
+
+/**
  * Get token from localStorage
  */
 export const getToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token');
+  if (!isBrowser) return null;
+  return window.localStorage.getItem('token');
 };
 
 /**
  * Get user from localStorage
  */
 export const getStoredUser = () => {
-  if (typeof window === 'undefined') return null;
-  const userStr = localStorage.getItem('user');
+  if (!isBrowser) return null;
+  const userStr = window.localStorage.getItem('user');
   if (!userStr) return null;
-  
+
   try {
     return JSON.parse(userStr);
   } catch {
@@ -37,18 +42,18 @@ export const isAuthenticated = (): boolean => {
  * Clear all auth data from localStorage
  */
 export const clearAuthData = (): void => {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
+  if (!isBrowser) return;
+  window.localStorage.removeItem('token');
+  window.localStorage.removeItem('user');
 };
 
 /**
  * Store auth data in localStorage
  */
 export const storeAuthData = (token: string, user: any): void => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('token', token);
-  localStorage.setItem('user', JSON.stringify(user));
+  if (!isBrowser) return;
+  window.localStorage.setItem('token', token);
+  window.localStorage.setItem('user', JSON.stringify(user));
 };
 
 /**
